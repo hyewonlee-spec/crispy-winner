@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 const STORAGE_KEY = "rehab_strength_tracker_v1";
+const SHEET_URL_STORAGE_KEY = "rehab_strength_tracker_sheet_url";
 
 const workoutPlan = {
   1: {
@@ -198,11 +199,15 @@ export default function App() {
   const [dogWalk, setDogWalk] = useState(30);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState({});
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [saveStatus, setSaveStatus] = useState("");
 
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setData(JSON.parse(raw));
+      const savedSheetUrl = window.localStorage.getItem(SHEET_URL_STORAGE_KEY);
+      if (savedSheetUrl) setSheetUrl(savedSheetUrl);
     } catch (error) {
       console.warn("Could not load saved data", error);
     }
@@ -215,6 +220,14 @@ export default function App() {
       console.warn("Could not save data", error);
     }
   }, [data]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SHEET_URL_STORAGE_KEY, sheetUrl);
+    } catch (error) {
+      console.warn("Could not save Google Sheet URL", error);
+    }
+  }, [sheetUrl]);
 
   const readiness = useMemo(() => {
     let score = 25;
@@ -247,7 +260,7 @@ export default function App() {
     });
     const avg = (key) => last7.length ? (last7.reduce((sum, log) => sum + Number(log[key] || 0), 0) / last7.length).toFixed(1) : "—";
     return {
-      sessions: last7.filter((l) => l.type !== "Check-in only").length,
+      sessions: last7.filter((l) => l.type !== "Check-in only" && l.type !== "Readiness only").length,
       avgReadiness: avg("readiness"),
       avgAnkle: avg("anklePain"),
       avgBack: avg("backPain"),
@@ -256,12 +269,19 @@ export default function App() {
     };
   }, [data.logs]);
 
-  const saveLog = (type = workoutPlan[selectedDay].title) => {
-    const log = {
+  const buildLogPayload = (type) => {
+    const completedExercises = Object.keys(completed)
+      .filter((index) => completed[index])
+      .map((index) => workoutPlan[selectedDay]?.exercises?.[Number(index)]?.name)
+      .filter(Boolean);
+
+    return {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      timestamp: new Date().toISOString(),
       date: today,
       type,
       selectedDay,
+      workoutTitle: workoutPlan[selectedDay].title,
       readiness,
       sleep,
       energy,
@@ -274,8 +294,40 @@ export default function App() {
       dogWalk,
       notes,
       completed,
+      completedExercises,
     };
+  };
+
+  const sendToGoogleSheet = async (log) => {
+    const url = sheetUrl.trim();
+    if (!url) return "skipped";
+
+    await fetch(url, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(log),
+    });
+
+    return "sent";
+  };
+
+  const saveLog = async (type = workoutPlan[selectedDay].title) => {
+    const log = buildLogPayload(type);
     setData((prev) => ({ ...prev, logs: [log, ...prev.logs.filter((l) => !(l.date === today && l.type === type))] }));
+
+    setSaveStatus("Saving…");
+    try {
+      const sheetResult = await sendToGoogleSheet(log);
+      if (sheetResult === "sent") {
+        setSaveStatus(type === "Readiness only" ? "Readiness saved locally. Google Sheet sync request sent." : "Workout saved locally. Google Sheet sync request sent.");
+      } else {
+        setSaveStatus(type === "Readiness only" ? "Readiness saved locally." : "Workout saved locally.");
+      }
+    } catch (error) {
+      console.warn("Google Sheet sync failed", error);
+      setSaveStatus("Saved locally, but Google Sheet sync failed. Check the Apps Script URL.");
+    }
   };
 
   const resetToday = () => {
@@ -290,6 +342,7 @@ export default function App() {
     setDogWalk(30);
     setNotes("");
     setCompleted({});
+    setSaveStatus("");
   };
 
   const toggleGoal = (key) => {
@@ -410,10 +463,33 @@ export default function App() {
               />
             </label>
 
+            <Card>
+              <div className="sectionTitle">
+                <TrendingUp size={20} />
+                <div>
+                  <h2>Google Sheet sync</h2>
+                  <p className="muted">Paste your Google Apps Script Web App URL here. Leave blank to save only on this phone/browser.</p>
+                </div>
+              </div>
+              <input
+                className="dateInput"
+                placeholder="https://script.google.com/macros/s/.../exec"
+                value={sheetUrl}
+                onChange={(e) => setSheetUrl(e.target.value)}
+              />
+            </Card>
+
+            {saveStatus && (
+              <div className="saveStatus">
+                {saveStatus}
+              </div>
+            )}
+
             <div className="twoCol">
               <Button onClick={() => saveLog()}>Save workout</Button>
-              <Button onClick={() => saveLog("Check-in only")} variant="outline">Check-in only</Button>
+              <Button onClick={() => saveLog("Readiness only")} variant="outline">Save readiness only</Button>
             </div>
+            <p className="tiny">Save readiness only records symptoms, sleep, energy, stress, dog walk and notes without counting it as a workout session.</p>
             <Button onClick={resetToday} variant="ghost"><RotateCcw size={16} /> Reset today</Button>
           </motion.div>
         )}

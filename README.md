@@ -36,3 +36,25 @@ Open the app link in Chrome → three-dot menu → Add to Home screen or Install
 - Data is saved locally in the browser using localStorage.
 - Clearing browser data can delete logs.
 - This version does not use a cloud database.
+
+
+## Updating the deployed Vercel app
+
+Vercel does not read changes from ChatGPT canvas. It only deploys files that are committed to the connected GitHub repo.
+
+To update:
+1. Replace the files in your GitHub repo with the files in this folder.
+2. Commit the changes to the branch Vercel watches, usually `main`.
+3. Vercel will create a new deployment automatically.
+4. If it does not, go to Vercel → Project → Deployments → three-dot menu → Redeploy.
+
+## Google Sheet sync
+
+1. In your Google Sheet, create these headers:
+   Timestamp, Date, Type, Selected Day, Workout Title, Readiness, Sleep, Energy, Stress, Back Pain, Nerve Symptoms, Ankle Pain, Ankle Stability, Shoulder, Dog Walk, Completed Exercises, Notes
+2. Go to Extensions → Apps Script.
+3. Paste the contents of `google-apps-script-doPost.js`.
+4. Deploy as Web App.
+5. Set Execute as: Me.
+6. Set Who has access: Anyone.
+7. Paste the Web App URL into the tracker app.
