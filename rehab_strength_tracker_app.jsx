@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "rehab_strength_tracker_v1";
+const SHEET_URL_STORAGE_KEY = "rehab_strength_tracker_sheet_url";
 
 const workoutPlan = {
   1: {
@@ -178,12 +179,16 @@ function App() {
   const [dogWalk, setDogWalk] = useState(30);
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState({});
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [saveStatus, setSaveStatus] = useState("");
 
   useEffect(() => {
     try {
       if (typeof window === "undefined" || !window.localStorage) return;
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setData(JSON.parse(raw));
+      const savedSheetUrl = window.localStorage.getItem(SHEET_URL_STORAGE_KEY);
+      if (savedSheetUrl) setSheetUrl(savedSheetUrl);
     } catch (error) {
       console.warn("Could not load saved data", error);
     }
@@ -197,6 +202,15 @@ function App() {
       console.warn("Could not save data", error);
     }
   }, [data]);
+
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined" || !window.localStorage) return;
+      window.localStorage.setItem(SHEET_URL_STORAGE_KEY, sheetUrl);
+    } catch (error) {
+      console.warn("Could not save Google Sheet URL", error);
+    }
+  }, [sheetUrl]);
 
   const readiness = useMemo(() => {
     let score = 25;
@@ -229,7 +243,7 @@ function App() {
     });
     const avg = (key) => last7.length ? (last7.reduce((sum, log) => sum + Number(log[key] || 0), 0) / last7.length).toFixed(1) : "—";
     return {
-      sessions: last7.filter((l) => l.type !== "Check-in only").length,
+      sessions: last7.filter((l) => l.type !== "Check-in only" && l.type !== "Readiness only").length,
       avgReadiness: avg("readiness"),
       avgAnkle: avg("anklePain"),
       avgBack: avg("backPain"),
@@ -238,12 +252,19 @@ function App() {
     };
   }, [data.logs]);
 
-  const saveLog = (type = workoutPlan[selectedDay].title) => {
-    const log = {
+  const buildLogPayload = (type) => {
+    const completedExercises = Object.keys(completed)
+      .filter((index) => completed[index])
+      .map((index) => workoutPlan[selectedDay]?.exercises?.[Number(index)]?.name)
+      .filter(Boolean);
+
+    return {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      timestamp: new Date().toISOString(),
       date: today,
       type,
       selectedDay,
+      workoutTitle: workoutPlan[selectedDay].title,
       readiness,
       sleep,
       energy,
@@ -256,9 +277,41 @@ function App() {
       dogWalk,
       notes,
       completed,
+      completedExercises,
     };
-    setData((prev) => ({ ...prev, logs: [log, ...prev.logs.filter((l) => !(l.date === today && l.type === type))] }));
   };
+
+  const sendToGoogleSheet = async (log) => {
+    const url = sheetUrl.trim();
+    if (!url) return "skipped";
+
+    await fetch(url, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(log),
+    });
+
+    return "sent";
+  };
+
+  const saveLog = async (type = workoutPlan[selectedDay].title) => {
+    const log = buildLogPayload(type);
+    setData((prev) => ({ ...prev, logs: [log, ...prev.logs.filter((l) => !(l.date === today && l.type === type))] }));
+
+    setSaveStatus("Saving…");
+    try {
+      const sheetResult = await sendToGoogleSheet(log);
+      if (sheetResult === "sent") {
+        setSaveStatus(type === "Readiness only" ? "Readiness saved locally. Google Sheet sync request sent." : "Workout saved locally. Google Sheet sync request sent.");
+      } else {
+        setSaveStatus(type === "Readiness only" ? "Readiness saved locally." : "Workout saved locally.");
+      }
+    } catch (error) {
+      console.warn("Google Sheet sync failed", error);
+      setSaveStatus("Saved locally, but Google Sheet sync failed. Check the Apps Script URL.");
+    }
+  }; 
 
   const resetToday = () => {
     setSleep(6);
@@ -272,6 +325,7 @@ function App() {
     setDogWalk(30);
     setNotes("");
     setCompleted({});
+    setSaveStatus("");
   };
 
   const toggleGoal = (key) => {
@@ -403,10 +457,33 @@ function App() {
               />
             </label>
 
+            <div className="rounded-3xl border bg-white p-4 shadow-sm">
+              <div className="mb-2 flex items-start gap-2">
+                <TrendingUp className="mt-0.5 h-5 w-5 text-slate-700" />
+                <div>
+                  <h3 className="font-semibold">Google Sheet sync</h3>
+                  <p className="text-sm text-slate-600">Paste your Google Apps Script Web App URL here. Leave blank to save only on this phone/browser.</p>
+                </div>
+              </div>
+              <input
+                className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm"
+                placeholder="https://script.google.com/macros/s/.../exec"
+                value={sheetUrl}
+                onChange={(e) => setSheetUrl(e.target.value)}
+              />
+            </div>
+
+            {saveStatus && (
+              <div className="rounded-2xl border bg-slate-900 p-3 text-sm font-medium text-white shadow-sm">
+                {saveStatus}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <Button onClick={() => saveLog()} className="h-12 rounded-2xl bg-slate-900 text-white">Save workout</Button>
-              <Button onClick={() => saveLog("Check-in only")} variant="outline" className="h-12 rounded-2xl">Check-in only</Button>
+              <Button onClick={() => saveLog("Readiness only")} variant="outline" className="h-12 rounded-2xl">Save readiness only</Button>
             </div>
+            <p className="-mt-2 text-xs text-slate-500">Save readiness only records your symptoms, sleep, energy, stress, dog walk and notes without counting it as a workout session.</p>
             <Button onClick={resetToday} variant="ghost" className="w-full rounded-2xl"><RotateCcw className="mr-2 h-4 w-4" />Reset today</Button>
           </motion.div>
         )}
