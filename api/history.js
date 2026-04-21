@@ -5,15 +5,18 @@ const {
   getTitle,
   getSelect,
   getNumber,
-  getDate,
   getRichText,
 } = require("./_notion");
+
+function getDateDirect(page, propName) {
+  return page.properties?.[propName]?.date?.start || "";
+}
 
 function mapSession(page) {
   return {
     id: page.id,
     session: getTitle(page, "Session"),
-    date: getDate(page, "Date"),
+    date: getDateDirect(page, "Date"),
     type: getSelect(page, "Type"),
     workoutSource: getSelect(page, "Workout Source"),
     readiness: getNumber(page, "Readiness"),
