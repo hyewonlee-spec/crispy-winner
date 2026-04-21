@@ -90,3 +90,12 @@
 .periodPopupActions{display:flex;gap:10px;justify-content:center}
 .smallButton{min-height:38px;padding:8px 18px;width:auto}
 @media(max-width:430px){.periodDatePopup input{width:88%}.periodPopupActions{flex-direction:row}.smallButton{min-width:96px}}
+
+
+/* Phase 8.3 cycle cleanup */
+.cyclePhase.compact{margin:0}
+.todayCycleGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cycleTodayCard{background:linear-gradient(135deg,#fff,#faf5ff)}
+.periodStatusPanel .muted + h3{margin-top:2px}
+.cyclePhase > p.muted:last-child{display:none}
+@media(max-width:430px){.todayCycleGrid{grid-template-columns:1fr 1fr}}
