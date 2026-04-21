@@ -100,7 +100,7 @@ function latestPeriodStart(logs, fallback) {
   return starts[starts.length - 1] || fallback || "";
 }
 
-function calculateCycleDashboard(date:cycle.dailyEntryDate || date, periodStartDate, logs) {
+function calculateCycleDashboard(date, periodStartDate, logs) {
   if (!periodStartDate) {
     return {
       cycleDay: null,
