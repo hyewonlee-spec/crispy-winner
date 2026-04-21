@@ -20,3 +20,6 @@ Phase 7.1: updated Cycle Logs property name from Period Day to Cycle Day.
 
 
 Phase 8: Cycle tab now supports Period Started/Ended buttons plus daily symptom check-ins. See PHASE_8_CYCLE_EVENTS_NOTES.md.
+
+
+Phase 8.1: Cycle tab UI polish and Yes/No symptom buttons. See PHASE_8_1_CYCLE_UI_NOTES.md.

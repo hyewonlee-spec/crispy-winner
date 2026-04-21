@@ -55,3 +55,23 @@
 .periodAction{border:1px solid var(--line);background:#fff;border-radius:22px;padding:12px;display:grid;gap:10px}
 .periodAction h3{color:#5b21b6}
 @media(max-width:520px){.periodActionGrid{grid-template-columns:1fr}}
+
+
+/* Phase 8.1 cycle UI feedback */
+.periodActionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.periodAction{border:1px solid var(--line);background:#fff;border-radius:22px;padding:12px;display:grid;gap:10px}
+.periodAction h3{color:#5b21b6}
+.centerControl{margin-left:auto;margin-right:auto}
+.wide80{width:80%;max-width:360px}
+.halfWidth{width:50%;max-width:240px;margin-left:auto;margin-right:auto}
+.centerField{display:block;text-align:left}
+.centerField input{width:100%}
+.periodCalcNote{margin-top:22px}
+.symptomButtonGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.symptomButton{border:1px solid var(--line);background:#fff;border-radius:20px;padding:13px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--ink);font-weight:850;min-height:58px}
+.symptomButton span{font-size:14px}
+.symptomButton b{border-radius:999px;background:#f5f3ff;color:#6d28d9;padding:6px 10px;font-size:13px}
+.symptomButton.active{background:#ede9fe;border-color:#a78bfa;box-shadow:0 0 0 4px rgba(139,92,246,.12)}
+.symptomButton.active b{background:#7c3aed;color:#fff}
+@media(max-width:520px){.periodActionGrid{grid-template-columns:1fr}.symptomButtonGrid{grid-template-columns:1fr}.halfWidth{width:70%;max-width:260px}.wide80{width:90%}}
+@media(max-width:390px){.halfWidth{width:82%}.wide80{width:96%}}

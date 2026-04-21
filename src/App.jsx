@@ -236,6 +236,7 @@ export default function App(){
   const [cycleStatus,setCycleStatus]=useState("");
 
   function show(message,kind="info"){setToast({message,kind});setTimeout(()=>setToast(t=>t.message===message?{message:"",kind:"info"}:t),3500)}
+  function toggleSymptom(key){setCycle(c=>({...c,[key]:Number(c[key]||0)>0?0:6}))}
   function draftPayload(){return{date,type,workoutSource,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,exercises:workoutExercises}}
   function applyDraft(d){setDate(d.date||todayIso());setType(d.type||"Custom Workout");setWorkoutSource(d.workoutSource||"Custom");setSleep(d.sleep??6);setEnergy(d.energy??6);setStress(d.stress??4);setBackPain(d.backPain??0);setNerve(d.nerve??0);setAnklePain(d.anklePain??0);setAnkleStability(d.ankleStability??5);setShoulder(d.shoulder??0);setDogWalk(d.dogWalk??30);setNotes(d.notes||"");setWorkoutExercises(d.exercises||[]);}
 
@@ -357,31 +358,31 @@ export default function App(){
       <div className="periodActionGrid">
         <div className="periodAction">
           <h3>Period start</h3>
-          <Button variant="primary" full onClick={()=>markPeriodStarted(true)}>Period Started Today</Button>
-          <label className="field"><span>Or choose start date</span><input type="date" value={cycle.periodStartDate} onChange={e=>setCycle({...cycle,periodStartDate:e.target.value})}/></label>
-          <Button variant="secondary" full onClick={()=>markPeriodStarted(false)}>Use selected start date</Button>
+          <div className="centerControl wide80"><Button variant="primary" full onClick={()=>markPeriodStarted(true)}>Period Started Today</Button></div>
+          <label className="field centerField halfWidth"><span>Or choose start date</span><input type="date" value={cycle.periodStartDate} onChange={e=>setCycle({...cycle,periodStartDate:e.target.value})}/></label>
+          <div className="centerControl halfWidth"><Button variant="secondary" full onClick={()=>markPeriodStarted(false)}>Confirm</Button></div>
         </div>
         <div className="periodAction">
           <h3>Period end</h3>
-          <Button variant="primary" full onClick={()=>markPeriodEnded(true)}>Period Ended Today</Button>
-          <label className="field"><span>Or choose end date</span><input type="date" value={cycle.periodEndDate} onChange={e=>setCycle({...cycle,periodEndDate:e.target.value})}/></label>
-          <Button variant="secondary" full onClick={()=>markPeriodEnded(false)}>Use selected end date</Button>
+          <div className="centerControl wide80"><Button variant="primary" full onClick={()=>markPeriodEnded(true)}>Period Ended Today</Button></div>
+          <label className="field centerField halfWidth"><span>Or choose end date</span><input type="date" value={cycle.periodEndDate} onChange={e=>setCycle({...cycle,periodEndDate:e.target.value})}/></label>
+          <div className="centerControl halfWidth"><Button variant="secondary" full onClick={()=>markPeriodEnded(false)}>Confirm</Button></div>
         </div>
       </div>
-      <p className="helperText">Period length, average period length and ovulation timing are calculated in the background for the dashboard.</p>
+      <p className="helperText periodCalcNote">Period length, average period length and ovulation timing are calculated in the background for the dashboard.</p>
     </div>
 
     <div className="panel cyclePanel">
       <div className="sectionTitle"><Activity size={20}/><h2>Daily symptom check-in</h2></div>
-      <p className="muted">Record these daily. This is what makes the training recommendations personal instead of generic.</p>
-      <label className="field"><span>Daily check-in date</span><input type="date" value={cycle.dailyEntryDate} onChange={e=>setCycle({...cycle,dailyEntryDate:e.target.value})}/></label>
+      <p className="muted">Record these daily. Tap a symptom to mark Yes; leave it as No if it was not present today.</p>
+      <label className="field centerField halfWidth"><span>Daily check-in date</span><input type="date" value={cycle.dailyEntryDate} onChange={e=>setCycle({...cycle,dailyEntryDate:e.target.value})}/></label>
       <label className="field"><span>Bleeding flow</span><select value={cycle.bleedingFlow} onChange={e=>setCycle({...cycle,bleedingFlow:e.target.value})}><option>None</option><option>Spotting</option><option>Light</option><option>Medium</option><option>Heavy</option></select></label>
-      <div className="miniGrid">
-        <label className="field"><span>Cramps / pelvic pain</span><input type="range" min="0" max="10" value={cycle.cramps} onChange={e=>setCycle({...cycle,cramps:Number(e.target.value)})}/><b>{cycle.cramps}</b></label>
-        <label className="field"><span>Hot flushes / night sweats</span><input type="range" min="0" max="10" value={cycle.hotFlushes} onChange={e=>setCycle({...cycle,hotFlushes:Number(e.target.value)})}/><b>{cycle.hotFlushes}</b></label>
-        <label className="field"><span>Sleep disruption</span><input type="range" min="0" max="10" value={cycle.sleepDisruption} onChange={e=>setCycle({...cycle,sleepDisruption:Number(e.target.value)})}/><b>{cycle.sleepDisruption}</b></label>
-        <label className="field"><span>Mood / irritability</span><input type="range" min="0" max="10" value={cycle.mood} onChange={e=>setCycle({...cycle,mood:Number(e.target.value)})}/><b>{cycle.mood}</b></label>
-        <label className="field"><span>Fatigue</span><input type="range" min="0" max="10" value={cycle.fatigue} onChange={e=>setCycle({...cycle,fatigue:Number(e.target.value)})}/><b>{cycle.fatigue}</b></label>
+      <div className="symptomButtonGrid">
+        <button type="button" className={cycle.cramps>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("cramps")}><span>Cramps / pelvic pain</span><b>{cycle.cramps>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.hotFlushes>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("hotFlushes")}><span>Hot flushes / night sweats</span><b>{cycle.hotFlushes>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.sleepDisruption>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sleepDisruption")}><span>Sleep disruption</span><b>{cycle.sleepDisruption>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.mood>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("mood")}><span>Mood / irritability</span><b>{cycle.mood>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.fatigue>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("fatigue")}><span>Fatigue</span><b>{cycle.fatigue>0?"Yes":"No"}</b></button>
       </div>
       <textarea className="notes small" placeholder="Daily cycle notes…" value={cycle.notes} onChange={e=>setCycle({...cycle,notes:e.target.value})}/>
       <div className="twoCol"><Button variant="secondary" onClick={()=>loadCycleLogs(true)}>Refresh cycle</Button><Button variant="primary" onClick={saveCycleCheck}>Save daily check-in</Button></div>
