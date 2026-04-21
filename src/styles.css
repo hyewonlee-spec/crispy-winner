@@ -24,3 +24,18 @@
 .checkCard ul{padding-left:20px}
 @media(min-width:680px){.checkGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.dateLabel{max-width:58%;min-width:150px}.dateInput{max-width:180px}.overviewGrid{grid-template-columns:1fr}.lineChart{height:130px}}
+
+
+/* Phase 6 cycle-aware training */
+.cyclePanel{background:linear-gradient(135deg,#fff,#faf5ff)}
+.cycleMini{background:#fbf7ff}
+.cycleMini p{color:var(--muted);margin-top:4px}
+.cyclePhase{border:1px solid var(--line);border-radius:24px;background:#fff;padding:14px;margin-bottom:12px;display:grid;gap:6px}
+.cyclePhase h2{color:#6d28d9}
+.cyclePhase strong{display:inline-flex;width:max-content;max-width:100%;border-radius:999px;background:#ede9fe;color:#5b21b6;padding:7px 10px}
+.cyclePhase.menstrual{background:linear-gradient(135deg,#fff1f2,#fff)}
+.cyclePhase.follicular{background:linear-gradient(135deg,#ecfdf5,#fff)}
+.cyclePhase.ovulation-window{background:linear-gradient(135deg,#fefce8,#fff)}
+.cyclePhase.luteal{background:linear-gradient(135deg,#f5f3ff,#fff)}
+.cyclePanel input[type=range]{width:100%;accent-color:var(--lav);height:30px}
+.cyclePanel .field b{display:block;text-align:right;color:#6d28d9;margin-top:2px}

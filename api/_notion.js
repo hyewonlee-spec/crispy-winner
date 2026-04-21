@@ -8,6 +8,7 @@ const env = {
   exerciseSetsDb: process.env.NOTION_EXERCISE_SETS_DB_ID,
   workoutTemplatesDb: process.env.NOTION_WORKOUT_TEMPLATES_DB_ID,
   templateExercisesDb: process.env.NOTION_TEMPLATE_EXERCISES_DB_ID,
+  cycleLogsDb: process.env.NOTION_CYCLE_LOGS_DB_ID,
 };
 
 function missingEnv() {

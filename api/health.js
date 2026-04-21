@@ -12,7 +12,8 @@ module.exports = async function handler(req, res) {
       NOTION_EXERCISE_SETS_DB_ID: Boolean(env.exerciseSetsDb),
       NOTION_WORKOUT_TEMPLATES_DB_ID: Boolean(env.workoutTemplatesDb),
       NOTION_TEMPLATE_EXERCISES_DB_ID: Boolean(env.templateExercisesDb),
+      NOTION_CYCLE_LOGS_DB_ID: Boolean(env.cycleLogsDb),
     },
-    note: "Template database variables are optional unless you use Notion-saved workout templates."
+    note: "Template and Cycle database variables are optional unless you use those features."
   });
 };
