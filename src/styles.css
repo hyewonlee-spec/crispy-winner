@@ -99,3 +99,21 @@
 .periodStatusPanel .muted + h3{margin-top:2px}
 .cyclePhase > p.muted:last-child{display:none}
 @media(max-width:430px){.todayCycleGrid{grid-template-columns:1fr 1fr}}
+
+
+/* Phase 8.4 clean UI */
+.pastelLinkBox{
+  width:100%;
+  border:1px solid #ddd6fe;
+  background:linear-gradient(135deg,#f5f3ff,#fdf2f8);
+  color:#6d28d9;
+  border-radius:20px;
+  padding:13px 14px;
+  margin-top:12px;
+  font-weight:900;
+  text-align:center;
+}
+.pastelLinkBox:active{transform:scale(.99);filter:brightness(.97)}
+.helperText{display:none}
+.cycleTodayCard .cyclePhase{margin-bottom:0}
+.periodStateBox.endedPeriod .secondary{background:#f5f3ff}
