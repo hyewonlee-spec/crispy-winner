@@ -11,3 +11,6 @@ Optional env var: NOTION_CYCLE_LOGS_DB_ID
 
 
 Phase 6.1: Cycle database options cleaned to match user's Notion setup: no Unknown, no Brain Fog, Fatigue only.
+
+
+Phase 7: dedicated Cycle tab. See PHASE_7_CYCLE_TAB_NOTES.md.
