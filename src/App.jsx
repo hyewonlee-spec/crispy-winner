@@ -305,7 +305,7 @@ export default function App(){
       periodEndDate:cycle.periodEndDate,
       periodLength:inclusiveDays(cycle.periodStartDate,cycle.periodEndDate),
       cycleLength:currentCycle.averageCycleLength,
-      periodDay:currentCycle.cycleDay,
+      cycleDay:currentCycle.cycleDay,
       cyclePhase:currentCycle.phase==="Not enough data yet" ? "" : currentCycle.phase,
       trainingRecommendation:currentCycle.trainingRecommendation
     };

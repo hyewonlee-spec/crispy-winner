@@ -14,3 +14,6 @@ Phase 6.1: Cycle database options cleaned to match user's Notion setup: no Unkno
 
 
 Phase 7: dedicated Cycle tab. See PHASE_7_CYCLE_TAB_NOTES.md.
+
+
+Phase 7.1: updated Cycle Logs property name from Period Day to Cycle Day.

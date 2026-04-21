@@ -29,7 +29,7 @@ This patch moves cycle-aware training out of Check and into its own bottom tab: 
 | Period End Date | Date |
 | Period Length | Number |
 | Cycle Length | Number |
-| Period Day | Number |
+| Cycle Day | Number |
 | Cycle Phase | Select |
 | Bleeding Flow | Select |
 | Cramps / Pelvic Pain | Number |
