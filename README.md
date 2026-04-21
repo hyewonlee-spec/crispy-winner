@@ -1,15 +1,7 @@
-# Rehab Strength Tracker v2 — Phase 2 Build
+# Rehab Strength Tracker v2 — Phase 3 UX Polish
 
-This is the Phase 2 build: a Vite React app with Vercel API routes for Notion.
+This version improves UX and adds a Progress dashboard.
 
-## What it does
+Start with `PHASE_3_UX_NOTES.md`.
 
-- Loads exercises from Notion Exercise Library
-- Lets you add exercises to a workout
-- Lets you create custom exercises in Notion
-- Lets you log sets, reps, weight, and RPE
-- Saves workout sessions to Notion
-- Creates linked Workout Exercise rows
-- Creates linked Exercise Set rows
-
-Start with `PHASE_2_SETUP.md`.
+Make sure the new `api/history.js` file is uploaded to your GitHub repo root under `/api`.
