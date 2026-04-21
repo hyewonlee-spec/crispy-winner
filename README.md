@@ -17,3 +17,6 @@ Phase 7: dedicated Cycle tab. See PHASE_7_CYCLE_TAB_NOTES.md.
 
 
 Phase 7.1: updated Cycle Logs property name from Period Day to Cycle Day.
+
+
+Phase 8: Cycle tab now supports Period Started/Ended buttons plus daily symptom check-ins. See PHASE_8_CYCLE_EVENTS_NOTES.md.
