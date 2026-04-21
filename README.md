@@ -1,11 +1,5 @@
-# Rehab Strength Tracker v2 — Phase 4
+# Rehab Strength Tracker v2 — Phase 5 UX Patch
 
-Upload the contents of this folder to your GitHub repo root and redeploy Vercel.
+Upload the contents to your GitHub repo root and redeploy Vercel.
 
-Important new files:
-
-api/exercise-history.js
-api/templates.js
-PHASE_4_NOTES.md
-
-Optional template databases are described in PHASE_4_NOTES.md.
+Read `PHASE_5_NOTES.md` for the UX changes and period-tracker ideas.
