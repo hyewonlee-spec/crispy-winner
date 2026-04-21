@@ -232,6 +232,8 @@ export default function App(){
   const [notes,setNotes]=useState(""); const [workoutExercises,setWorkoutExercises]=useState([]);
   const [custom,setCustom]=useState({exercise:"",category:"Custom",equipment:"",movementPattern:"Custom",primaryMuscles:"",status:"Custom",riskFlags:"",defaultSets:3,defaultReps:"10",defaultRpe:6,coachNote:""});
   const [cycle,setCycle]=useState({date:todayIso(),dailyEntryDate:todayIso(),periodStartDate:"",periodEndDate:"",bleedingFlow:"None",cramps:0,hotFlushes:0,sleepDisruption:0,mood:0,fatigue:0,notes:""});
+  const [periodDateMode,setPeriodDateMode]=useState(null);
+  const [pendingPeriodDate,setPendingPeriodDate]=useState(todayIso());
   const [cycleLogs,setCycleLogs]=useState([]);
   const [cycleStatus,setCycleStatus]=useState("");
 
@@ -298,6 +300,24 @@ export default function App(){
     }
   }
 
+  function openPeriodDateBox(mode){
+    setPeriodDateMode(mode);
+    setPendingPeriodDate(mode==="start" ? (cycle.periodStartDate || todayIso()) : (cycle.periodEndDate || todayIso()));
+  }
+
+  function confirmPeriodDate(){
+    if(!pendingPeriodDate) return show("Choose a date first.","error");
+    if(periodDateMode==="start"){
+      setCycle(c=>({...c,periodStartDate:pendingPeriodDate,periodEndDate:"",dailyEntryDate:pendingPeriodDate,bleedingFlow:c.bleedingFlow==="None"?"Medium":c.bleedingFlow}));
+      show(`Period start saved: ${pendingPeriodDate}`,"success");
+    }
+    if(periodDateMode==="end"){
+      setCycle(c=>({...c,periodEndDate:pendingPeriodDate,dailyEntryDate:pendingPeriodDate}));
+      show(`Period end saved: ${pendingPeriodDate}`,"success");
+    }
+    setPeriodDateMode(null);
+  }
+
   function markPeriodStarted(useToday=true){
     const chosen = useToday ? todayIso() : cycle.periodStartDate;
     if(!chosen) return show("Choose a period start date first.","error");
@@ -352,23 +372,56 @@ export default function App(){
     {tab==="exerciseHistory"&&<section className="stack"><div className="panel"><div className="sectionTitle"><History size={20}/><h2>{selectedHistoryExercise?.exercise||"Exercise"} History</h2></div><Button variant="secondary" full onClick={()=>setTab("library")}>Back to library</Button></div>{busy.exerciseHistory&&<div className="panel"><Spinner on/> Loading history…</div>}{exerciseHistory&&<><div className="statsGrid"><Stat label="Entries" value={exerciseHistory.summary?.entries}/><Stat label="Sets" value={exerciseHistory.summary?.totalSets}/><Stat label="Best weight" value={exerciseHistory.summary?.bestSet?.weight}/><Stat label="Best reps" value={exerciseHistory.summary?.bestSet?.reps}/></div><div className="panel"><h2>Past sets</h2><div className="sessionList">{exerciseHistory.sets.map(s=><div className="sessionItem" key={s.id}><div className="row"><b>{s.setEntry}</b><span className="pill">{s.weight??"—"}{s.weightUnit||"kg"} × {s.reps??"—"}</span></div><p className="muted">RPE {s.rpe??"—"} · {s.workoutExerciseName}</p></div>)}</div></div></>}</section>}
     {tab==="cycle"&&<section className="stack"><div className="panel cyclePanel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><div className={`cyclePhase ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}><p className="muted">Current estimated phase</p><h2>{currentCycle.phase}</h2><div className="cycleHeroGrid"><div><span>Cycle day</span><b>{currentCycle.cycleDay??"—"}</b></div><div><span>Days until projected period</span><b>{currentCycle.daysUntilNextPeriod??"—"}</b></div><div><span>Projected period start</span><b>{currentCycle.nextPeriodStart||"—"}</b></div><div><span>Estimated ovulation</span><b>{currentCycle.ovulationDate||"—"}</b></div></div><strong>{currentCycle.trainingRecommendation}</strong><p className="muted">{currentCycle.coachText}</p></div></div>
 
-    <div className="panel cyclePanel">
+    <div className="panel cyclePanel periodStatusPanel">
       <div className="sectionTitle"><CalendarPlus size={20}/><h2>Period dates</h2></div>
-      <p className="muted">Use the buttons when you remember on the day. Use the calendar fields if you need to backdate it.</p>
-      <div className="periodActionGrid">
-        <div className="periodAction">
-          <h3>Period start</h3>
-          <div className="centerControl wide80"><Button variant="primary" full onClick={()=>markPeriodStarted(true)}>Period Started Today</Button></div>
-          <label className="field centerField halfWidth"><span>Or choose start date</span><input type="date" value={cycle.periodStartDate} onChange={e=>setCycle({...cycle,periodStartDate:e.target.value})}/></label>
-          <div className="centerControl halfWidth"><Button variant="secondary" full onClick={()=>markPeriodStarted(false)}>Confirm</Button></div>
+      <p className="muted">Tap the button, choose the date, then save. The card changes once your period start is recorded.</p>
+
+      {!cycle.periodStartDate && (
+        <div className="periodStateBox waiting">
+          <p className="muted">Current status</p>
+          <h3>No active period recorded</h3>
+          <p>When your period starts, record the start date here.</p>
+          <div className="centerControl wide80">
+            <Button variant="primary" full onClick={()=>openPeriodDateBox("start")}>Period Started Today</Button>
+          </div>
         </div>
-        <div className="periodAction">
-          <h3>Period end</h3>
-          <div className="centerControl wide80"><Button variant="primary" full onClick={()=>markPeriodEnded(true)}>Period Ended Today</Button></div>
-          <label className="field centerField halfWidth"><span>Or choose end date</span><input type="date" value={cycle.periodEndDate} onChange={e=>setCycle({...cycle,periodEndDate:e.target.value})}/></label>
-          <div className="centerControl halfWidth"><Button variant="secondary" full onClick={()=>markPeriodEnded(false)}>Confirm</Button></div>
+      )}
+
+      {cycle.periodStartDate && !cycle.periodEndDate && (
+        <div className="periodStateBox activePeriod">
+          <p className="muted">Current period</p>
+          <h3>Day {inclusiveDays(cycle.periodStartDate, date) || currentCycle.cycleDay || "—"}</h3>
+          <p>Started: <b>{cycle.periodStartDate}</b></p>
+          <p className="muted">When bleeding has finished, record the end date.</p>
+          <div className="centerControl wide80">
+            <Button variant="primary" full onClick={()=>openPeriodDateBox("end")}>Period Ended</Button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {cycle.periodStartDate && cycle.periodEndDate && (
+        <div className="periodStateBox endedPeriod">
+          <p className="muted">Last recorded period</p>
+          <h3>{inclusiveDays(cycle.periodStartDate, cycle.periodEndDate) || "—"} days recorded</h3>
+          <p>Start: <b>{cycle.periodStartDate}</b></p>
+          <p>End: <b>{cycle.periodEndDate}</b></p>
+          <div className="centerControl wide80">
+            <Button variant="secondary" full onClick={()=>openPeriodDateBox("start")}>Record next period start</Button>
+          </div>
+        </div>
+      )}
+
+      {periodDateMode && (
+        <div className="periodDatePopup">
+          <h3>{periodDateMode==="start" ? "Choose period start date" : "Choose period end date"}</h3>
+          <input type="date" value={pendingPeriodDate} onChange={e=>setPendingPeriodDate(e.target.value)}/>
+          <div className="periodPopupActions">
+            <button type="button" className="ghost smallButton" onClick={()=>setPeriodDateMode(null)}>Cancel</button>
+            <button type="button" className="primary smallButton" onClick={confirmPeriodDate}>Save</button>
+          </div>
+        </div>
+      )}
+
       <p className="helperText periodCalcNote">Period length, average period length and ovulation timing are calculated in the background for the dashboard.</p>
     </div>
 

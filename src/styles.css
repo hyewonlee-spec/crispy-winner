@@ -75,3 +75,18 @@
 .symptomButton.active b{background:#7c3aed;color:#fff}
 @media(max-width:520px){.periodActionGrid{grid-template-columns:1fr}.symptomButtonGrid{grid-template-columns:1fr}.halfWidth{width:70%;max-width:260px}.wide80{width:90%}}
 @media(max-width:390px){.halfWidth{width:82%}.wide80{width:96%}}
+
+
+/* Phase 8.2 period flow */
+.periodStatusPanel{position:relative}
+.periodStateBox{border:1px solid var(--line);border-radius:24px;padding:16px;background:#fff;display:grid;gap:8px;margin-top:12px;text-align:center}
+.periodStateBox h3{color:#5b21b6;font-size:clamp(22px,6vw,32px)}
+.periodStateBox.waiting{background:linear-gradient(135deg,#fff,#faf5ff)}
+.periodStateBox.activePeriod{background:linear-gradient(135deg,#fdf2f8,#fff)}
+.periodStateBox.endedPeriod{background:linear-gradient(135deg,#f5f3ff,#fff)}
+.periodDatePopup{border:1px solid #c4b5fd;background:#fff;box-shadow:0 18px 38px rgba(91,33,182,.16);border-radius:24px;padding:16px;margin-top:14px;display:grid;gap:12px}
+.periodDatePopup h3{text-align:center;color:#5b21b6}
+.periodDatePopup input{width:70%;max-width:260px;margin:0 auto;border:1px solid var(--line);border-radius:18px;padding:12px;background:#fff}
+.periodPopupActions{display:flex;gap:10px;justify-content:center}
+.smallButton{min-height:38px;padding:8px 18px;width:auto}
+@media(max-width:430px){.periodDatePopup input{width:88%}.periodPopupActions{flex-direction:row}.smallButton{min-width:96px}}
