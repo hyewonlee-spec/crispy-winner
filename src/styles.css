@@ -395,3 +395,28 @@
 .compactSymptoms .symptomButton b{font-size:11px;padding:5px 8px}
 .saveCheckinButton{width:70%;max-width:320px;margin-top:22px}
 @media(max-width:420px){.periodActionButton{width:60%}.previousCycleDates{gap:8px}.previousCycleDates input{font-size:13px;padding:10px 6px}.twoLineFlow .flowBubble{flex-basis:calc(33.333% - 8px);font-size:12px}.compactSymptoms .symptomButton span{font-size:12px}.saveCheckinButton{width:78%}}
+
+
+/* Today page cycle card simplification */
+.cycleTodayButton{
+  width:100%;
+  border:1px solid var(--line);
+  text-align:left;
+  cursor:pointer;
+}
+.cycleTodayButton .cyclePhase h3{
+  text-align:center;
+  font-size:clamp(30px,9vw,48px);
+  color:#5b21b6;
+}
+.cycleTodayButton .trainingBubble{
+  margin:14px auto 0;
+  display:flex;
+  width:max-content;
+  max-width:100%;
+  justify-content:center;
+}
+.cycleTodayButton:active{
+  transform:scale(.99);
+  filter:brightness(.98);
+}

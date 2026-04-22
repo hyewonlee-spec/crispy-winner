@@ -562,22 +562,14 @@ export default function App(){
     </div>
   </div>
 
-  {trackCycle==="yes"&&<div className="panel cycleTodayCard">
-    <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
-    <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
-      <h3 className="phaseLarge">{currentCycle.phase}</h3>
-      <div className="cycleHeroGrid todayCycleGrid">
-        <div className="nextPeriodBox"><span>Next period is due</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} days</b></div>
-      </div>
-      <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
-    </div>
-    <button type="button" className="pastelLinkBox" onClick={()=>setTab("cycle")}>Open Cycle tab</button>
-  </div>}
-
-  <div className={`readiness panel ${readinessZone.toLowerCase()}`}>
-    <div className="row">
-      <div><h2 className="big">{readinessZone}</h2><p className="statusMeaning">{readinessMeaning}</p></div>
-      <div className="bubble">{readiness>=18?<CheckCircle2/>:<AlertTriangle/>}</div>
+  {trackCycle==="yes"&&<button type="button" className="panel cycleTodayCard cycleTodayButton" onClick={()=>setTab("cycle")}>
+  <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
+  <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
+    <h3>{currentCycle.phase}</h3>
+    <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
+  </div>
+</button>}}
+<div className="bubble">{readiness>=18?<CheckCircle2/>:<AlertTriangle/>}</div>
     </div>
     <div className="meter"><span style={{width:`${(readiness/30)*100}%`}}/></div>
   </div>
