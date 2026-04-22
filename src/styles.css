@@ -427,16 +427,7 @@
   background:linear-gradient(135deg,#fff1f2,#fff);
 }
 
-
-/* Phase 10.11 Progress report */
-.progressReportChart h3{margin-bottom:10px;color:#5b21b6;}
-.progressLineChart{width:100%;height:170px;color:#5b21b6;}
-.gridLine{stroke:rgba(91,33,182,.14);stroke-width:1;}
-.gridLine.vertical{stroke:rgba(91,33,182,.09);}
-.axisText{fill:var(--muted);font-size:10px;font-weight:800;}
-.progressReport .miniOverview p{display:flex;justify-content:space-between;gap:10px;}
-
-/* Cycle small patch */
+/* Cycle small patch fixed */
 .previousPeriodFields input[type="date"],
 .previousPeriodFieldsSide input[type="date"]{
   height:34px;
