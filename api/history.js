@@ -11,12 +11,6 @@ function mapSession(page) {
     sleep: getNumber(page, "Sleep"),
     energy: getNumber(page, "Energy"),
     stress: getNumber(page, "Stress"),
-    backPain: getNumber(page, "Back Pain"),
-    nerveSymptoms: getNumber(page, "Nerve Symptoms"),
-    anklePain: getNumber(page, "Ankle Pain"),
-    ankleStability: getNumber(page, "Ankle Stability"),
-    shoulder: getNumber(page, "Shoulder"),
-    dogWalk: getNumber(page, "Dog Walk"),
     notes: getRichText(page, "Session Notes"),
   };
 }
@@ -43,12 +37,6 @@ module.exports = async function handler(req, res) {
         avgSleep: average(sessions, "sleep"),
         avgEnergy: average(sessions, "energy"),
         avgStress: average(sessions, "stress"),
-        avgBackPain: average(sessions, "backPain"),
-        avgNerveSymptoms: average(sessions, "nerveSymptoms"),
-        avgAnklePain: average(sessions, "anklePain"),
-        avgAnkleStability: average(sessions, "ankleStability"),
-        avgShoulder: average(sessions, "shoulder"),
-        avgDogWalk: average(sessions, "dogWalk"),
       },
     });
   } catch (error) {
