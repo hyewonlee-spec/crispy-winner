@@ -1,7 +1,7 @@
 {
-  "name": "Rehab Strength Tracker v2",
-  "short_name": "Rehab Tracker",
-  "description": "Notion-powered rehab-aware workout tracker.",
+  "name": "Muscle Queens",
+  "short_name": "Muscle Queens",
+  "description": "Cycle-aware strength and rehab workout tracker.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf5ff",

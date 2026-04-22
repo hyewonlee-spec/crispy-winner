@@ -157,9 +157,8 @@ function calculateCycleDashboard(date, periodStartDate, logs) {
 function cycleTrainingRecommendation(cycle) {
   const symptomLoad =
     Number(cycle.cramps || 0) +
-    Number(cycle.hotFlushes || 0) +
     Number(cycle.sleepDisruption || 0) +
-    Number(cycle.mood || 0) +
+    Number(cycle.moodSwings || cycle.mood || 0) +
     Number(cycle.fatigue || 0) +
     Number(cycle.headacheMigraine || 0) +
     Number(cycle.indigestion || 0) +
@@ -177,8 +176,7 @@ function cycleTrainingRecommendation(cycle) {
   if (
     symptomLoad >= 20 ||
     cycle.cramps >= 5 ||
-    cycle.hotFlushes >= 5 ||
-    cycle.mood >= 6 || cycle.bloating >= 6 || cycle.indigestion >= 6
+    cycle.moodSwings >= 5 || cycle.mood >= 6 || cycle.bloating >= 6 || cycle.indigestion >= 6
   ) {
     return "Reduce load 10–20%";
   }
@@ -189,7 +187,7 @@ function cycleTrainingRecommendation(cycle) {
 
   if (
     cycle.phase === "Luteal" &&
-    (cycle.sleepDisruption >= 4 || cycle.mood >= 4 || cycle.fatigue >= 4)
+    (cycle.sleepDisruption >= 4 || cycle.moodSwings >= 4 || cycle.mood >= 4 || cycle.fatigue >= 4)
   ) {
     return "Moderate intensity + recovery";
   }
@@ -230,6 +228,13 @@ function formatDays(value) {
   return value === null || value === undefined || value === "" ? "—" : value;
 }
 
+function formatAuLongDate(value) {
+  if (!value) return "";
+  const d = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-AU", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+}
+
 export default function App(){
   const [tab,setTab]=useState("today");
   const [exercises,setExercises]=useState([]);
@@ -249,7 +254,7 @@ export default function App(){
   const [sleep,setSleep]=useState(6),[energy,setEnergy]=useState(6),[stress,setStress]=useState(4),[backPain,setBackPain]=useState(0),[nerve,setNerve]=useState(0),[anklePain,setAnklePain]=useState(0),[ankleStability,setAnkleStability]=useState(5),[shoulder,setShoulder]=useState(0),[dogWalk,setDogWalk]=useState(30);
   const [notes,setNotes]=useState(""); const [workoutExercises,setWorkoutExercises]=useState([]);
   const [custom,setCustom]=useState({exercise:"",category:"Custom",equipment:"",movementPattern:"Custom",primaryMuscles:"",status:"Custom",riskFlags:"",defaultSets:3,defaultReps:"10",coachNote:""});
-  const [cycle,setCycle]=useState({date:todayIso(),dailyEntryDate:todayIso(),periodStartDate:"",periodEndDate:"",bleedingFlow:"None",cramps:0,hotFlushes:0,sleepDisruption:0,mood:0,fatigue:0,headacheMigraine:0,saltCravings:0,sugarCravings:0,indigestion:0,bloating:0,notes:""});
+  const [cycle,setCycle]=useState({date:todayIso(),dailyEntryDate:todayIso(),periodStartDate:"",periodEndDate:"",flowOptions:[],cramps:0,sleepDisruption:0,moodSwings:0,fatigue:0,headacheMigraine:0,saltCravings:0,sugarCravings:0,indigestion:0,bloating:0,constipation:0,tenderBreasts:0,acne:0,dizziness:0,notes:""});
   const [periodDateMode,setPeriodDateMode]=useState(null);
   const [pendingPeriodDate,setPendingPeriodDate]=useState(todayIso());
   const [cycleLogs,setCycleLogs]=useState([]);
@@ -257,6 +262,14 @@ export default function App(){
 
   function show(message,kind="info"){setToast({message,kind});setTimeout(()=>setToast(t=>t.message===message?{message:"",kind:"info"}:t),3500)}
   function toggleSymptom(key){setCycle(c=>({...c,[key]:Number(c[key]||0)>0?0:6}))}
+  function toggleFlow(option){
+    setCycle(c=>{
+      const current=Array.isArray(c.flowOptions)?c.flowOptions:[].concat(c.bleedingFlow||[]).filter(Boolean);
+      const exists=current.includes(option);
+      const next=exists?current.filter(item=>item!==option):[...current, option].slice(-2);
+      return {...c,flowOptions:next,bleedingFlow:next.join(", ")};
+    });
+  }
   function draftPayload(){return{date,type,workoutSource,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,exercises:workoutExercises}}
   function applyDraft(d){setDate(d.date||todayIso());setType(d.type||"Custom Workout");setWorkoutSource(d.workoutSource||"Custom");setSleep(d.sleep??6);setEnergy(d.energy??6);setStress(d.stress??4);setBackPain(d.backPain??0);setNerve(d.nerve??0);setAnklePain(d.anklePain??0);setAnkleStability(d.ankleStability??5);setShoulder(d.shoulder??0);setDogWalk(d.dogWalk??30);setNotes(d.notes||"");setWorkoutExercises(d.exercises||[]);}
 
@@ -325,7 +338,23 @@ export default function App(){
   }
   function addExercise(ex,source="Added"){if(workoutSource==="Recommended")setWorkoutSource("Modified Recommended");const next=makeExercise(ex,source);setWorkoutExercises(prev=>[...prev,next]);setTab("workout");show(`${ex.exercise} added.`,"success");setTimeout(()=>hydratePrevious(next),100)}
   function applyRecommendedPlan(key){setStartPrompt(key)}
-  function buildCustomWorkout(){setBuilderMode("custom");setType("Custom Workout");setWorkoutSource("Custom");setWorkoutExercises([]);setTab("workout");show("Custom workout started.","success")}
+  async function buildCustomWorkout(){
+    setBuilderMode("custom");
+    setType("Custom Workout");
+    setWorkoutSource("Custom");
+    setWorkoutExercises([]);
+    setBusy(b=>({...b,save:true}));
+    try{
+      const payload={date,type:"Custom Workout",workoutSource:"Custom",readiness,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,exercises:[],action:"start"};
+      const r=await fetch("/api/workouts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const j=await r.json();
+      if(!r.ok)throw new Error(j.error||"Could not start workout");
+      setActiveWorkout({sessionId:j.sessionId,sessionUrl:j.sessionUrl,startTime:new Date().toISOString(),type:"Custom Workout",source:"Custom"});
+      setTab("workout");
+      show("DIY workout started.","success");
+    }catch(e){show(`Start failed: ${e.message}`,"error")}
+    finally{setBusy(b=>({...b,save:false}))}
+  }
   function updateWorkoutExercise(id,patch){setWorkoutExercises(prev=>prev.map(e=>e.localId===id?{...e,...patch}:e))}
   function updateSet(id,i,patch){setWorkoutExercises(prev=>prev.map(e=>e.localId!==id?e:{...e,sets:e.sets.map((s,idx)=>idx===i?{...s,...patch}:s)}))}
   function addSet(id){setWorkoutExercises(prev=>prev.map(e=>e.localId===id?{...e,sets:[...e.sets,defaultSet(e.sets.length+1)]}:e));show("Set added.","success")}
@@ -349,17 +378,21 @@ export default function App(){
           ...c,
           periodStartDate:latest.periodStartDate||c.periodStartDate,
           periodEndDate:latest.periodEndDate||c.periodEndDate,
-          bleedingFlow:latest.bleedingFlow||c.bleedingFlow,
+          flowOptions:Array.isArray(latest.bleedingFlow)?latest.bleedingFlow:(latest.bleedingFlow?String(latest.bleedingFlow).split(",").map(x=>x.trim()).filter(Boolean):c.flowOptions),
           cramps:latest.cramps??c.cramps,
-          hotFlushes:latest.hotFlushes??c.hotFlushes,
+          
           sleepDisruption:latest.sleepDisruption??c.sleepDisruption,
-          mood:latest.mood??c.mood,
+          moodSwings:latest.moodSwings??latest.mood??c.moodSwings,
           fatigue:latest.fatigue??c.fatigue,
           headacheMigraine:latest.headacheMigraine??c.headacheMigraine,
           saltCravings:latest.saltCravings??c.saltCravings,
           sugarCravings:latest.sugarCravings??c.sugarCravings,
           indigestion:latest.indigestion??c.indigestion,
-          bloating:latest.bloating??c.bloating
+          bloating:latest.bloating??c.bloating,
+          constipation:latest.constipation??c.constipation,
+          tenderBreasts:latest.tenderBreasts??c.tenderBreasts,
+          acne:latest.acne??c.acne,
+          dizziness:latest.dizziness??c.dizziness
         }))
       }
       setCycleStatus("");
@@ -376,7 +409,7 @@ export default function App(){
   }
 
   function resetPeriodFlow(){
-    setCycle(c=>({...c,periodStartDate:"",periodEndDate:"",bleedingFlow:"None"}));
+    setCycle(c=>({...c,periodStartDate:"",periodEndDate:"",flowOptions:[]}));
     setPeriodDateMode(null);
     show("Period flow reset.","success");
   }
@@ -384,7 +417,7 @@ export default function App(){
   function confirmPeriodDate(){
     if(!pendingPeriodDate) return show("Choose a date first.","error");
     if(periodDateMode==="start"){
-      setCycle(c=>({...c,periodStartDate:pendingPeriodDate,periodEndDate:"",dailyEntryDate:pendingPeriodDate,bleedingFlow:c.bleedingFlow==="None"?"Medium":c.bleedingFlow}));
+      setCycle(c=>({...c,periodStartDate:pendingPeriodDate,periodEndDate:"",dailyEntryDate:pendingPeriodDate,flowOptions:c.flowOptions||[]}));
       show(`Period start saved: ${pendingPeriodDate}`,"success");
     }
     if(periodDateMode==="end"){
@@ -397,7 +430,7 @@ export default function App(){
   function markPeriodStarted(useToday=true){
     const chosen = useToday ? todayIso() : cycle.periodStartDate;
     if(!chosen) return show("Choose a period start date first.","error");
-    setCycle(c=>({...c,periodStartDate:chosen,dailyEntryDate:c.dailyEntryDate||chosen,bleedingFlow:c.bleedingFlow==="None"?"Medium":c.bleedingFlow}));
+    setCycle(c=>({...c,periodStartDate:chosen,dailyEntryDate:c.dailyEntryDate||chosen,flowOptions:c.flowOptions||[]}));
     show(`Period start marked: ${chosen}`,"success");
   }
 
@@ -411,7 +444,7 @@ export default function App(){
   async function saveCycleCheck(){
     const payload={
       ...cycle,
-      date,
+      date:cycle.dailyEntryDate || date,
       periodStartDate:cycle.periodStartDate,
       periodEndDate:cycle.periodEndDate,
       periodLength:inclusiveDays(cycle.periodStartDate,cycle.periodEndDate),
@@ -443,33 +476,72 @@ export default function App(){
   return <div className={`app ${activeWorkout ? "activeWorkoutMode" : ""}`}><Toast toast={toast} onClose={()=>setToast({message:"",kind:"info"})}/>
       {startPrompt&&<div className="modalShade"><div className="modalBox"><h2>Do you want to start today’s workout?</h2><p>{recommendedPlans[startPrompt]?.title}</p><div className="twoCol"><Button variant="secondary" onClick={()=>setStartPrompt(null)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={()=>startWorkoutFromPlan(startPrompt)}>Yes</Button></div></div></div>}
       {endPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you sure?</h2><p>End today’s workout and record it to Notion?</p><div className="twoCol"><Button variant="secondary" onClick={()=>setEndPrompt(false)}>No</Button><Button variant="primary" busy={busy.save} onClick={endTodayWorkout}>Yes</Button></div></div></div>}
-      <main className="shell"><header className="header"><div><p className="overline">Rehab Strength v2</p><h1>Rehab Log</h1></div><button className="mini" onClick={()=>loadExercises(true)} disabled={busy.library}><Spinner on={busy.library}/> Sync</button></header>
-    {tab==="today"&&<section className="stack"><div className="panel"><div className="sectionTitle"><CalendarDays size={20}/><h2>Readiness Check</h2></div><label className="label dateLabel">Date<input className="input dateInput" type="date" value={date} onChange={e=>setDate(e.target.value)} /></label></div><div className={`readiness panel ${readinessZone.toLowerCase()}`}><div className="row"><div><h2 className="big">{readinessZone}</h2><p className="muted">{readiness}/25</p></div><div className="bubble">{readiness>=18?<CheckCircle2/>:<AlertTriangle/>}</div></div><div className="meter"><span style={{width:`${(readiness/25)*100}%`}}/></div></div><div className="coach"><AlertTriangle size={20}/><p>{coachNote}</p></div><div className="panel cycleTodayCard">
-  <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
-  <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
-    <h3>{currentCycle.phase}</h3>
-    <div className="cycleHeroGrid todayCycleGrid">
-      <div><span>Cycle day</span><b>{currentCycle.cycleDay??"—"}</b></div>
-      <div><span>Next period</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} days</b></div>
+      <main className="shell"><header className="header"><div><p className="overline">Muscle Queens</p><h1>Dashboard</h1></div><button className="mini" onClick={()=>loadExercises(true)} disabled={busy.library}><Spinner on={busy.library}/> Sync</button></header>
+    {tab==="today"&&<section className="stack dashboardToday">
+  <div className="panel readinessCheckPanel">
+    <div className="sectionTitle"><CalendarDays size={20}/><h2>Are you ready for a workout?</h2></div>
+    <div className="todayDateDisplay">{formatAuLongDate(date)}</div>
+    <div className="readinessInputs">
+      <Slider label="Sleep quality" value={sleep} setValue={setSleep} lowGood={false}/>
+      <Slider label="Energy" value={energy} setValue={setEnergy} lowGood={false}/>
+      <Slider label="Stress" value={stress} setValue={setStress}/>
     </div>
-    <strong>{currentCycle.trainingRecommendation}</strong>
   </div>
-  <button type="button" className="pastelLinkBox" onClick={()=>setTab("cycle")}>Open Cycle tab</button>
-</div><Slider label="Sleep quality" value={sleep} setValue={setSleep} lowGood={false}/><Slider label="Energy" value={energy} setValue={setEnergy} lowGood={false}/><Slider label="Stress" value={stress} setValue={setStress}/><Slider label="Back pain" value={backPain} setValue={setBackPain}/><Slider label="Left leg nerve/numbness" value={nerve} setValue={setNerve}/><Slider label="Left ankle pain" value={anklePain} setValue={setAnklePain}/><Slider label="Left ankle stability" value={ankleStability} setValue={setAnkleStability} lowGood={false}/><Slider label="Left shoulder sensation/pain" value={shoulder} setValue={setShoulder}/><Slider label="Dog walk minutes" value={dogWalk} setValue={setDogWalk} lowGood={false}/><div className="panel"><div className="sectionTitle"><Dumbbell size={20}/><h2>Workout</h2></div><div className="builderToggle"><button className={builderMode==="recommended"?"active":""} onClick={()=>setBuilderMode("recommended")}>Recommended</button><button className={builderMode==="custom"?"active":""} onClick={buildCustomWorkout}>DIY</button></div>{builderMode==="recommended"&&<div className="planStack">{Object.entries(recommendedPlans).map(([k,p])=><button key={k} className="plan" onClick={()=>applyRecommendedPlan(k)}><span><b>{p.title}</b><small>{p.focus}</small></span><span>{p.exercises.length}</span></button>)}</div>}</div><textarea className="notes" placeholder="Session/readiness notes…" value={notes} onChange={e=>setNotes(e.target.value)}/><Button variant="secondary" full busy={busy.save} onClick={()=>saveWorkout(true)}><Save size={16}/> Save readiness only</Button></section>}
+
+  <div className="panel symptomsPanel">
+    <div className="sectionTitle"><AlertTriangle size={20}/><h2>Symptoms checklist</h2></div>
+    <Slider label="Back pain" value={backPain} setValue={setBackPain}/>
+    <Slider label="Left leg nerve/numbness" value={nerve} setValue={setNerve}/>
+    <Slider label="Left ankle pain" value={anklePain} setValue={setAnklePain}/>
+    <Slider label="Left ankle stability" value={ankleStability} setValue={setAnkleStability} lowGood={false}/>
+    <Slider label="Left shoulder sensation/pain" value={shoulder} setValue={setShoulder}/>
+  </div>
+
+  <div className={`readiness panel ${readinessZone.toLowerCase()}`}>
+    <div className="row">
+      <div><h2 className="big">{readinessZone}</h2><p className="muted">{readiness}/25</p></div>
+      <div className="bubble">{readiness>=18?<CheckCircle2/>:<AlertTriangle/>}</div>
+    </div>
+    <div className="meter"><span style={{width:`${(readiness/25)*100}%`}}/></div>
+  </div>
+
+  <div className="panel cycleTodayCard">
+    <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
+    <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
+      <h3 className="phaseLarge">{currentCycle.phase}</h3>
+      <div className="cycleHeroGrid todayCycleGrid">
+        <div className="nextPeriodBox"><span>Next period is due</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} days</b></div>
+      </div>
+      <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
+    </div>
+    <button type="button" className="pastelLinkBox" onClick={()=>setTab("cycle")}>Open Cycle tab</button>
+  </div>
+
+  <textarea className="notes" placeholder="Notes…" value={notes} onChange={e=>setNotes(e.target.value)}/>
+
+  <Button variant="secondary" full busy={busy.save} onClick={()=>saveWorkout(true)}><Save size={16}/> Record the day</Button>
+
+  <div className="panel">
+    <div className="sectionTitle"><Dumbbell size={20}/><h2>Workout</h2></div>
+    <div className="builderToggle">
+      <button className={builderMode==="recommended"?"active":""} onClick={()=>setBuilderMode("recommended")}>Recommended</button>
+      <button className={builderMode==="custom"?"active":""} onClick={buildCustomWorkout}>DIY</button>
+    </div>
+    {builderMode==="recommended"&&<div className="planStack">{Object.entries(recommendedPlans).map(([k,p])=><button key={k} className="plan" onClick={()=>applyRecommendedPlan(k)}><span><b>{p.title}</b><small>{p.focus}</small></span><span>{p.exercises.length}</span></button>)}</div>}
+  </div>
+</section>}
     {tab==="workout"&&<section className="stack"><div className="panel workoutHeader"><div><input className="workoutNameInput" value={type} onChange={e=>setType(e.target.value)} /><p className="muted">{workoutSource} · {workoutExercises.length} exercises · {totalSets} sets</p></div><Button variant="secondary" onClick={()=>setTab("library")}><Plus size={16}/> Add</Button></div>{workoutExercises.length===0&&<div className="empty"><Dumbbell size={28}/><h2>No exercises yet</h2><p>Add exercises from the library or start with a recommended plan.</p><Button full onClick={()=>setTab("library")}><Plus size={16}/> Add exercise</Button></div>}{workoutExercises.map(ex=><div className="panel exerciseCard" key={ex.localId}><div className="exerciseTop"><button className="collapseBtn" onClick={()=>updateWorkoutExercise(ex.localId,{collapsed:!ex.collapsed})}>{ex.collapsed?<ChevronDown size={18}/>:<ChevronUp size={18}/>}</button><div><h3>{ex.name}</h3><p className="muted">{ex.status} · {ex.category} · {ex.source}</p>{ex.previous&&<p className="previous">Previous: {ex.previous.weight??"—"}{ex.previous.weightUnit||"kg"} × {ex.previous.reps??"—"}</p>}</div><button className="iconBtn" onClick={()=>removeExercise(ex.localId)}><Trash2 size={16}/></button></div>{ex.coachNote&&<p className="note">{ex.coachNote}</p>}{!ex.collapsed&&<><div className="miniGrid"><label className="field"><span>Target sets</span><input inputMode="numeric" value={ex.targetSets} onChange={e=>updateWorkoutExercise(ex.localId,{targetSets:e.target.value})}/></label><label className="field"><span>Target reps</span><input value={ex.targetReps} onChange={e=>updateWorkoutExercise(ex.localId,{targetReps:e.target.value})}/></label></div><div className="setHeader noRpe"><span>Set</span><span>Weight</span><span>Reps</span><span></span></div><div className="sets">{ex.sets.map((s,i)=><div className="setRow noRpe" key={i}><b>{i+1}</b><input placeholder="kg" inputMode="decimal" value={s.weight} onChange={e=>updateSet(ex.localId,i,{weight:e.target.value})}/><input placeholder="reps" inputMode="numeric" value={s.reps} onChange={e=>updateSet(ex.localId,i,{reps:e.target.value})}/><button className="setDelete" onClick={()=>removeSet(ex.localId,i)}>×</button></div>)}</div><div className="twoCol"><Button variant="ghost" onClick={()=>addSet(ex.localId)}><Plus size={16}/> Add set</Button><Button variant="ghost" onClick={()=>duplicateLastSet(ex.localId)}>Copy the last set</Button></div><details className="symptomDetails"><summary>Exercise symptom check</summary><div className="miniGrid">{["Back","Nerve","Ankle","Shoulder"].map(label=>{const key=label.toLowerCase()+"DuringExercise";return <label className="field" key={key}><span>{label}</span><input inputMode="numeric" value={ex[key]} onChange={e=>updateWorkoutExercise(ex.localId,{[key]:e.target.value})}/></label>})}</div></details><textarea className="notes small" placeholder="Exercise notes…" value={ex.notes} onChange={e=>updateWorkoutExercise(ex.localId,{notes:e.target.value})}/></>}</div>)}<div className="twoCol"><Button variant="secondary" full onClick={saveDraft}>Save draft</Button><Button variant="secondary" full busy={busy.template} onClick={saveTemplate}>Save as Notion template</Button></div>{activeWorkout ? <Button variant="primary" full busy={busy.save} disabled={!workoutExercises.length} onClick={()=>setEndPrompt(true)}><Save size={16}/> End Today’s workout</Button> : <Button variant="primary" full busy={busy.save} disabled={!workoutExercises.length} onClick={startCurrentWorkout}><Save size={16}/> Start Today’s workout</Button>}<Button variant="ghost" full onClick={()=>{setWorkoutExercises([]);setNotes("");show("Draft cleared.","success")}}><RotateCcw size={16}/> Clear current draft</Button>{drafts.length>0&&<div className="panel"><h2>Saved drafts</h2><div className="sessionList">{drafts.map(d=><div className="sessionItem" key={d.id}><div className="row"><b>{d.name}</b><button className="linkBtn" onClick={()=>deleteDraft(d.id)}>Delete</button></div><Button variant="secondary" full onClick={()=>loadDraft(d)}>Load draft</Button></div>)}</div></div>}</section>}
     {tab==="library"&&<section className="stack"><div className="panel"><div className="sectionTitle"><Library size={20}/><h2>Exercise Library</h2></div><Button variant="secondary" full onClick={()=>document.getElementById("custom-exercise-form")?.scrollIntoView({behavior:"smooth"})}><Plus size={16}/> Add custom exercise to library</Button><div className="search"><Search size={16}/><input placeholder="Search exercises…" value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="twoCol"><select className="input compact" value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}><option>All</option>{categoryOptions.map(x=><option key={x}>{x}</option>)}</select><select className="input compact" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option>All</option>{statusOptions.map(x=><option key={x}>{x}</option>)}</select></div></div><div className="exerciseList">{filtered.map(e=><div className={`libraryItem ${e.status?.toLowerCase().replaceAll(" ","-")}`} key={e.id}><button onClick={()=>addExercise(e)}><div><b>{e.exercise}</b><p>{e.category} · {e.status}</p><small>{e.coachNote}</small></div><Plus size={18}/></button><button className="historyBtn" onClick={()=>showExerciseHistory(e)}><History size={16}/> History</button></div>)}</div><div className="panel" id="custom-exercise-form"><div className="sectionTitle"><Plus size={20}/><h2>Create custom exercise</h2></div><input className="input" placeholder="Exercise name" value={custom.exercise} onChange={e=>setCustom({...custom,exercise:e.target.value})}/><div className="twoCol"><select className="input" value={custom.category} onChange={e=>setCustom({...custom,category:e.target.value})}>{categoryOptions.map(x=><option key={x}>{x}</option>)}</select><select className="input" value={custom.status} onChange={e=>setCustom({...custom,status:e.target.value})}>{statusOptions.map(x=><option key={x}>{x}</option>)}</select></div><select className="input" value={custom.movementPattern} onChange={e=>setCustom({...custom,movementPattern:e.target.value})}>{movementOptions.map(x=><option key={x}>{x}</option>)}</select><input className="input" placeholder="Equipment, comma-separated" value={custom.equipment} onChange={e=>setCustom({...custom,equipment:e.target.value})}/><input className="input" placeholder="Primary muscles, comma-separated" value={custom.primaryMuscles} onChange={e=>setCustom({...custom,primaryMuscles:e.target.value})}/><input className="input" placeholder="Risk flags, comma-separated" value={custom.riskFlags} onChange={e=>setCustom({...custom,riskFlags:e.target.value})}/><div className="miniGrid"><label className="field"><span>Default sets</span><input value={custom.defaultSets} onChange={e=>setCustom({...custom,defaultSets:e.target.value})}/></label><label className="field"><span>Default reps</span><input value={custom.defaultReps} onChange={e=>setCustom({...custom,defaultReps:e.target.value})}/></label></div><textarea className="notes small" placeholder="Coach note" value={custom.coachNote} onChange={e=>setCustom({...custom,coachNote:e.target.value})}/><Button full busy={busy.custom} onClick={createCustomExercise}><Plus size={16}/> Save custom exercise</Button></div></section>}
     {tab==="progress"&&<section className="stack"><div className="panel"><div className="sectionTitle"><BarChart3 size={20}/><h2>Progress Dashboard</h2></div><Button variant="secondary" full busy={busy.history} onClick={()=>loadHistory(true)}>Refresh progress</Button>{history.error&&<p className="errorText">{history.error}</p>}</div><div className="statsGrid"><Stat label="Total logs" value={history.summary?.totalLogs}/><Stat label="Workouts" value={history.summary?.workouts}/><Stat label="Avg readiness" value={history.summary?.avgReadiness}/><Stat label="Avg sleep" value={history.summary?.avgSleep}/><Stat label="Avg ankle pain" value={history.summary?.avgAnklePain}/><Stat label="Avg back pain" value={history.summary?.avgBackPain}/></div><WeeklyMonthlyOverview sessions={history.sessions}/><MiniChart title="Readiness trend" data={history.sessions} keyName="readiness" max={25}/><MiniChart title="Ankle pain trend" data={history.sessions} keyName="anklePain" max={10}/><div className="panel"><h2>Recent sessions</h2><div className="sessionList">{history.sessions.slice(0,12).map(s=><div className="sessionItem" key={s.id}><div className="row"><b>{s.date||"No date"}</b><span className="pill">{s.readiness??"—"}/25</span></div><p className="muted">{s.type||"Log"} · Back {s.backPain??"—"} · Nerve {s.nerveSymptoms??"—"} · Ankle {s.anklePain??"—"} · Shoulder {s.shoulder??"—"}</p>{s.notes&&<p className="note">{s.notes}</p>}</div>)}</div></div></section>}
     {tab==="exerciseHistory"&&<section className="stack"><div className="panel"><div className="sectionTitle"><History size={20}/><h2>{selectedHistoryExercise?.exercise||"Exercise"} History</h2></div><Button variant="secondary" full onClick={()=>setTab("library")}>Back to library</Button></div>{busy.exerciseHistory&&<div className="panel"><Spinner on/> Loading history…</div>}{exerciseHistory&&<><div className="statsGrid"><Stat label="Entries" value={exerciseHistory.summary?.entries}/><Stat label="Sets" value={exerciseHistory.summary?.totalSets}/><Stat label="Best weight" value={exerciseHistory.summary?.bestSet?.weight}/><Stat label="Best reps" value={exerciseHistory.summary?.bestSet?.reps}/></div><div className="panel"><h2>Past sets</h2><div className="sessionList">{exerciseHistory.sets.map(s=><div className="sessionItem" key={s.id}><div className="row"><b>{s.setEntry}</b><span className="pill">{s.weight??"—"}{s.weightUnit||"kg"} × {s.reps??"—"}</span></div><p className="muted">RPE {s.rpe??"—"} · {s.workoutExerciseName}</p></div>)}</div></div></>}</section>}
-    {tab==="cycle"&&<section className="stack"><div className="panel cyclePanel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><div className={`cyclePhase ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}><h2>{currentCycle.phase}</h2><div className="cycleHeroGrid"><div><span>Cycle day</span><b>{currentCycle.cycleDay??"—"}</b></div><div><span>Days until projected period</span><b>{formatDays(currentCycle.daysUntilNextPeriod)}</b></div><div><span>Projected period start</span><b>{formatAuDate(currentCycle.nextPeriodStart)}</b></div><div><span>Estimated ovulation</span><b>{formatAuDate(currentCycle.ovulationDate)}</b></div></div><strong>{currentCycle.trainingRecommendation}</strong></div></div>
-
-    <div className="panel cyclePanel periodStatusPanel">
+    {tab==="cycle"&&<section className="stack"><div className="panel cyclePanel periodStatusPanel">
       <div className="sectionTitle"><CalendarPlus size={20}/><h2>Period dates</h2></div>
       {!cycle.periodStartDate && (
         <div className="periodStateBox waiting">
           
-          <h3>No active period recorded</h3>
+          <h3>{currentCycle.phase}</h3>
           <div className="centerControl wide80">
-            <Button variant="primary" full onClick={()=>openPeriodDateBox("start")}>Period Started Today</Button>
+            <Button variant="primary" full onClick={()=>markPeriodStarted(true)}>Period Started Today</Button>
           </div>
         </div>
       )}
@@ -510,27 +582,30 @@ export default function App(){
     </div>
 
     <div className="panel cyclePanel">
-      <div className="sectionTitle"><Activity size={20}/><h2>Daily symptom check-in</h2></div>
-      <label className="field centerField halfWidth"><span>Date</span><input type="date" value={cycle.dailyEntryDate} onChange={e=>setCycle({...cycle,dailyEntryDate:e.target.value})}/></label>
-      <label className="field"><span>Bleeding flow</span><select value={cycle.bleedingFlow} onChange={e=>setCycle({...cycle,bleedingFlow:e.target.value})}><option>None</option><option>Spotting</option><option>Light</option><option>Medium</option><option>Heavy</option></select></label>
-      <div className="symptomButtonGrid">
+      <div className="sectionTitle"><Activity size={20}/><h2>Cycle-aware check-in</h2></div>
+      <label className="field centerField halfWidth"><input type="date" value={cycle.dailyEntryDate} onChange={e=>setCycle({...cycle,dailyEntryDate:e.target.value})}/></label>
+      <div className="field flowField"><span>Flow</span><div className="flowBubbleGrid">{["Spotting","Light","Medium","Heavy","Clots"].map(option=><button type="button" key={option} className={(cycle.flowOptions||[]).includes(option)?"flowBubble active":"flowBubble"} onClick={()=>toggleFlow(option)}>{option}</button>)}</div></div>
+      <div className="symptomButtonGrid compactSymptoms">
         <button type="button" className={cycle.headacheMigraine>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("headacheMigraine")}><span>Headache / migraine</span><b>{cycle.headacheMigraine>0?"Yes":"No"}</b></button>
         <button type="button" className={cycle.saltCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("saltCravings")}><span>Salt cravings</span><b>{cycle.saltCravings>0?"Yes":"No"}</b></button>
         <button type="button" className={cycle.sugarCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sugarCravings")}><span>Sugar cravings</span><b>{cycle.sugarCravings>0?"Yes":"No"}</b></button>
         <button type="button" className={cycle.cramps>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("cramps")}><span>Cramps</span><b>{cycle.cramps>0?"Yes":"No"}</b></button>
         <button type="button" className={cycle.indigestion>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("indigestion")}><span>Indigestion</span><b>{cycle.indigestion>0?"Yes":"No"}</b></button>
         <button type="button" className={cycle.bloating>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("bloating")}><span>Bloating</span><b>{cycle.bloating>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.hotFlushes>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("hotFlushes")}><span>Hot flushes / night sweats</span><b>{cycle.hotFlushes>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.constipation>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("constipation")}><span>Constipation</span><b>{cycle.constipation>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.tenderBreasts>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("tenderBreasts")}><span>Tender breasts</span><b>{cycle.tenderBreasts>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.acne>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("acne")}><span>Acne</span><b>{cycle.acne>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.dizziness>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("dizziness")}><span>Dizziness</span><b>{cycle.dizziness>0?"Yes":"No"}</b></button>
         <button type="button" className={cycle.sleepDisruption>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sleepDisruption")}><span>Sleep disruption</span><b>{cycle.sleepDisruption>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.mood>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("mood")}><span>Mood / irritability</span><b>{cycle.mood>0?"Yes":"No"}</b></button>
+        <button type="button" className={cycle.moodSwings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("moodSwings")}><span>Mood swings</span><b>{cycle.moodSwings>0?"Yes":"No"}</b></button>
         <button type="button" className={cycle.fatigue>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("fatigue")}><span>Fatigue</span><b>{cycle.fatigue>0?"Yes":"No"}</b></button>
       </div>
       <textarea className="notes small" placeholder="Daily cycle notes…" value={cycle.notes} onChange={e=>setCycle({...cycle,notes:e.target.value})}/>
-      <div className="centerControl wide80"><Button variant="primary" full onClick={saveCycleCheck}>Save daily check-in</Button></div>
+      <div className="centerControl wide80"><Button variant="primary" full onClick={saveCycleCheck}>Save today’s check-in</Button></div>
       {cycleStatus&&<p className="errorText">{cycleStatus}</p>}
     </div>
 
     </section>}{tab==="rules"&&<section className="stack"><div className="panel"><div className="sectionTitle"><Activity size={20}/><h2>Check</h2></div></div>
     <div className="panel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><Button variant="secondary" full onClick={()=>setTab("cycle")}>Open Cycle tab</Button></div><div className="checkGrid"><div className="panel checkCard"><div className="sectionTitle"><Soup size={20}/><h3>Food choice</h3></div><ul><li>Protein at each meal when possible.</li><li>Pair carbs with protein around training for energy and recovery.</li><li>Hydrate before gym; add electrolytes if walking/training in heat.</li><li>Keep a quick fallback meal ready so fatigue does not become snack-chaos goblin time.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><Moon size={20}/><h3>Sleep hygiene</h3></div><ul><li>Same wake time most days.</li><li>Dim screens/bright lights in the final 30–60 minutes.</li><li>Avoid caffeine late afternoon/evening.</li><li>Keep the room cool, dark and boring in the best way.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><StretchHorizontal size={20}/><h3>Mobility / stretching</h3></div><ul><li>Before training: gentle dynamic warm-up, not aggressive stretching.</li><li>For ankle: controlled band work and balance before lower-body sessions.</li><li>For back: bird dog/dead bug style activation beats heavy flexion.</li><li>After training: relaxed stretching and breathing to downshift.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><AlertTriangle size={20}/><h3>Modify today if…</h3></div><ul><li>Nerve symptoms are up from baseline.</li><li>Left ankle feels unstable before warm-up.</li><li>Shoulder feels odd during the first warm-up sets.</li><li>Sleep/energy are poor: reduce load 10–20%.</li></ul></div></div><div className="panel"><h2>API checks</h2><p className="muted"><code>/api/health</code>, <code>/api/exercises</code>, <code>/api/history</code>, <code>/api/exercise-history?exerciseId=...</code></p></div></section>}
-  </main><nav className="bottomNav six"><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button><button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button><button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button><button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button><button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
+  </main><nav className={`bottomNav ${activeWorkout ? "six" : "five"}`}><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button>{activeWorkout&&<button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button>}<button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button><button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button><button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
 }
