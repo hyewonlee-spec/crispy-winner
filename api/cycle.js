@@ -89,12 +89,7 @@ module.exports = async function handler(req, res) {
     if (req.method === "DELETE") {
       const id = req.query.id;
       if (!id) return res.status(400).json({ error: "id is required" });
-
-      await notionRequest(`/pages/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ archived: true }),
-      });
-
+      await notionRequest(`/pages/${id}`, { method: "PATCH", body: JSON.stringify({ archived: true }) });
       return res.status(200).json({ status: "success", archived: true, id });
     }
 
