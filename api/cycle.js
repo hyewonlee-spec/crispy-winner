@@ -86,6 +86,18 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ logs: await getLogs() });
     }
 
+    if (req.method === "DELETE") {
+      const id = req.query.id;
+      if (!id) return res.status(400).json({ error: "id is required" });
+
+      await notionRequest(`/pages/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ archived: true }),
+      });
+
+      return res.status(200).json({ status: "success", archived: true, id });
+    }
+
     if (req.method === "POST") {
       const body = req.body || {};
       const date = body.date || new Date().toISOString().slice(0, 10);

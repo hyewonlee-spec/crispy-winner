@@ -3,7 +3,6 @@ import { Activity, AlertTriangle, BarChart3, CalendarDays, CalendarPlus, CheckCi
 
 const STORAGE_KEY = "rehab_strength_tracker_v2_phase4_draft";
 const DRAFTS_KEY = "rehab_strength_tracker_v2_phase4_drafts";
-const TRACK_CYCLE_KEY = "muscle_queens_track_cycle";
 const ACTIVE_WORKOUT_KEY = "rehab_strength_tracker_v2_phase9_active_workout";
 
 const recommendedPlans = {
@@ -249,7 +248,6 @@ export default function App(){
   const [drafts,setDrafts]=useState([]);
   const [toast,setToast]=useState({message:"",kind:"info"});
   const [busy,setBusy]=useState({library:false,save:false,custom:false,history:false,exerciseHistory:false,template:false});
-  const [trackCycle,setTrackCycle]=useState(()=>localStorage.getItem(TRACK_CYCLE_KEY));
   const [query,setQuery]=useState(""); const [categoryFilter,setCategoryFilter]=useState("All"); const [statusFilter,setStatusFilter]=useState("All");
   const [builderMode,setBuilderMode]=useState("recommended");
   const [startPrompt,setStartPrompt]=useState(null);
@@ -271,8 +269,6 @@ export default function App(){
   const [cycleStatus,setCycleStatus]=useState("");
 
   function show(message,kind="info"){setToast({message,kind});setTimeout(()=>setToast(t=>t.message===message?{message:"",kind:"info"}:t),3500)}
-  function chooseCycleTracking(choice){localStorage.setItem(TRACK_CYCLE_KEY,choice);setTrackCycle(choice);if(choice==="yes")loadCycleLogs(false);show(choice==="yes"?"Cycle tracking enabled.":"Cycle tracking hidden.","success")}
-  function changeCycleTracking(choice){localStorage.setItem(TRACK_CYCLE_KEY,choice);setTrackCycle(choice);if(choice==="yes")loadCycleLogs(false);show(choice==="yes"?"Cycle tracking enabled.":"Cycle tracking hidden.","success")}
   function toggleSymptom(key){setCycle(c=>({...c,[key]:Number(c[key]||0)>0?0:6}))}
   function toggleTodaySymptom(key){
     if(key==="ankleStability"){ setAnkleStability(v=>v<=3?7:3); return; }
@@ -291,8 +287,7 @@ export default function App(){
   function draftPayload(){return{date,type,workoutSource,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,exercises:workoutExercises}}
   function applyDraft(d){setDate(d.date||todayIso());setType(d.type||"Custom Workout");setWorkoutSource(d.workoutSource||"Custom");setSleep(d.sleep??6);setEnergy(d.energy??6);setStress(d.stress??4);setBackPain(d.backPain??0);setNerve(d.nerve??0);setAnklePain(d.anklePain??0);setAnkleStability(d.ankleStability??5);setShoulder(d.shoulder??0);setDogWalk(d.dogWalk??30);setNotes(d.notes||"");setWorkoutExercises(d.exercises||[]);}
 
-  useEffect(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)applyDraft(JSON.parse(raw));const ds=localStorage.getItem(DRAFTS_KEY);if(ds)setDrafts(JSON.parse(ds));const aw=localStorage.getItem(ACTIVE_WORKOUT_KEY);if(aw)setActiveWorkout(JSON.parse(aw))}catch{} loadExercises(false); loadHistory(false); loadTemplates(false); if(localStorage.getItem(TRACK_CYCLE_KEY)==="yes") loadCycleLogs(false)},[]);
-  useEffect(()=>{if(trackCycle==="no" && tab==="cycle") setTab("today")},[trackCycle,tab]);
+  useEffect(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)applyDraft(JSON.parse(raw));const ds=localStorage.getItem(DRAFTS_KEY);if(ds)setDrafts(JSON.parse(ds));const aw=localStorage.getItem(ACTIVE_WORKOUT_KEY);if(aw)setActiveWorkout(JSON.parse(aw))}catch{} loadExercises(false); loadHistory(false); loadTemplates(false); loadCycleLogs(false)},[]);
   useEffect(()=>{localStorage.setItem(STORAGE_KEY,JSON.stringify(draftPayload()))},[date,type,workoutSource,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,workoutExercises]);
   useEffect(()=>{localStorage.setItem(DRAFTS_KEY,JSON.stringify(drafts))},[drafts]);
   useEffect(()=>{if(activeWorkout){localStorage.setItem(ACTIVE_WORKOUT_KEY,JSON.stringify(activeWorkout))}else{localStorage.removeItem(ACTIVE_WORKOUT_KEY)}},[activeWorkout]);
@@ -492,6 +487,21 @@ export default function App(){
     }catch(e){show(`Previous period save failed: ${e.message}`,"error")}
   }
 
+  async function archiveCycleLog(id){
+    if(!id) return;
+    const ok=window.confirm("Delete this cycle entry?");
+    if(!ok) return;
+    try{
+      const r=await fetch(`/api/cycle?id=${encodeURIComponent(id)}`,{method:"DELETE"});
+      const j=await r.json();
+      if(!r.ok)throw new Error(j.error||"Delete failed");
+      show("Cycle entry deleted.","success");
+      await loadCycleLogs(false);
+    }catch(e){
+      show(`Delete failed: ${e.message}`,"error");
+    }
+  }
+
   async function saveCycleCheck(){
     const payload={
       ...cycle,
@@ -514,6 +524,7 @@ export default function App(){
       const j=await r.json();
       if(!r.ok)throw new Error(j.error||"Cycle save failed");
       show("Cycle check saved.","success");
+      setCycle(c=>({...c,bleedingFlow:[],headacheMigraine:0,saltCravings:0,sugarCravings:0,cramps:0,indigestion:0,bloating:0,constipation:0,tenderBreasts:0,acne:0,dizziness:0,sleepDisruption:0,moodSwings:0,fatigue:0,notes:""}));
       await loadCycleLogs(false)
     }catch(e){
       show(`Cycle save failed: ${e.message}`,"error")
@@ -522,19 +533,23 @@ export default function App(){
 
   async function saveWorkout(readinessOnly=false){const payload={date,type:readinessOnly?"Readiness only":type,workoutSource:readinessOnly?"Readiness only":workoutSource,readiness,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,exercises:readinessOnly?[]:workoutExercises};setBusy(b=>({...b,save:true}));show("Saving to Notion…","info");try{const r=await fetch("/api/workouts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const j=await r.json();if(!r.ok)throw new Error(j.error||"Save failed");show(`Saved. ${j.workoutExercisesCreated} exercises, ${j.setsCreated} sets.`,"success");await loadHistory(false);if(!readinessOnly)localStorage.removeItem(STORAGE_KEY)}catch(e){show(`Saved draft locally, Notion failed: ${e.message}`,"error")}finally{setBusy(b=>({...b,save:false}))}}
   async function recordDayAndPromptWorkout(){
+    if(dayRecordedToday){
+      setWorkoutChooserPrompt(true);
+      return;
+    }
     await saveWorkout(true);
+    setDayRecordedToday(true);
     setWorkoutChooserPrompt(true);
   }
   async function saveTemplate(){if(!workoutExercises.length)return show("Add exercises before saving a template.","error");setBusy(b=>({...b,template:true}));try{const name=prompt("Template name?")||type;const r=await fetch("/api/templates",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,type,focus:notes,exercises:workoutExercises})});const j=await r.json();if(!r.ok)throw new Error(j.error||"Template save failed");show(`Template saved: ${j.name}`,"success");await loadTemplates(false)}catch(e){show(`Template failed: ${e.message}`,"error")}finally{setBusy(b=>({...b,template:false}))}}
   async function showExerciseHistory(ex){setSelectedHistoryExercise(ex);setTab("exerciseHistory");setBusy(b=>({...b,exerciseHistory:true}));try{const r=await fetch(`/api/exercise-history?exerciseId=${ex.id}`);const j=await r.json();if(!r.ok)throw new Error(j.error||"History failed");setExerciseHistory(j)}catch(e){show(`History failed: ${e.message}`,"error")}finally{setBusy(b=>({...b,exerciseHistory:false}))}}
 
   return <div className={`app ${activeWorkout ? "activeWorkoutMode" : ""}`}><Toast toast={toast} onClose={()=>setToast({message:"",kind:"info"})}/>
-      {trackCycle===null&&<div className="modalShade"><div className="modalBox menstruationChoiceModal"><h2>Do you want to track menstruation?</h2><p>This controls whether cycle tracking appears in the app.</p><div className="twoCol"><Button variant="secondary" onClick={()=>chooseCycleTracking("no")}>No</Button><Button variant="primary" onClick={()=>chooseCycleTracking("yes")}>Yes</Button></div></div></div>}
       {startPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you ready to begin your workout?</h2><p>{recommendedPlans[startPrompt]?.title}</p><div className="twoCol"><Button variant="secondary" onClick={()=>setStartPrompt(null)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={()=>startWorkoutFromPlan(startPrompt)}>Yes</Button></div></div></div>}
       {customWorkoutPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you ready to begin your workout?</h2><p>Build your own workout</p><div className="twoCol"><Button variant="secondary" onClick={()=>setCustomWorkoutPrompt(false)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={startCustomWorkout}>Yes</Button></div></div></div>}
-      {workoutChooserPrompt&&<div className="modalShade"><div className="modalBox workoutChooserModal"><h2>Let’s begin your workout</h2><div className="chooserActions"><Button variant="secondary" full onClick={()=>{setWorkoutChooserPrompt(false);buildCustomWorkout()}}>Build your own</Button></div><div className="chooserPlanList">{Object.entries(recommendedPlans).map(([k,p])=><button key={k} className="plan" onClick={()=>{setWorkoutChooserPrompt(false);setStartPrompt(k)}}><span><b>{p.title}</b><small>{p.focus}</small></span><span>{p.exercises.length}</span></button>)}</div><Button variant="ghost" full onClick={()=>setWorkoutChooserPrompt(false)}>Not yet</Button></div></div>}
+      {workoutChooserPrompt&&<div className="modalShade"><div className="modalBox workoutChooserModal"><h2>Let’s begin your workout</h2><div className="chooserActions"><Button variant="secondary" full onClick={()=>{setWorkoutChooserPrompt(false);buildCustomWorkout()}}>Build your own</Button></div><div className="chooserPlanList">{Object.entries(recommendedPlans).map(([k,p])=><button key={k} className="plan" onClick={()=>{setWorkoutChooserPrompt(false);setStartPrompt(k)}}><span><b>{p.title}</b><small>{p.focus}</small></span><span>{p.exercises.length}</span></button>)}</div><Button variant="ghost" full onClick={()=>{setWorkoutChooserPrompt(false);setDayRecordedToday(true)}}>Not yet</Button></div></div>}
       {endPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you sure?</h2><p>End today’s workout and record it to Notion?</p><div className="twoCol"><Button variant="secondary" onClick={()=>setEndPrompt(false)}>No</Button><Button variant="primary" busy={busy.save} onClick={endTodayWorkout}>Yes</Button></div></div></div>}
-      <main className="shell"><header className="header"><div><p className="overline">Muscle Queens</p><h1>Dashboard</h1></div><button className="mini" onClick={()=>loadExercises(true)} disabled={busy.library}><Spinner on={busy.library}/> Sync</button></header>
+      <main className="shell"><header className="header"><div><p className="overline">Muscle Royalty</p><h1>Dashboard</h1></div><button className="mini" onClick={()=>loadExercises(true)} disabled={busy.library}><Spinner on={busy.library}/> Sync</button></header>
     {tab==="today"&&<section className="stack dashboardToday">
   <div className="panel readinessCheckPanel">
     <div className="sectionTitle"><CalendarDays size={20}/><h2>Are you ready for a workout?</h2></div>
@@ -544,24 +559,9 @@ export default function App(){
       <Slider label="Energy level" value={energy} setValue={setEnergy} lowGood={false} midLabel="Okay"/>
       <Slider label="Stress level" value={stress} setValue={setStress} midLabel="Okay"/>
     </div>
-    <Button variant="secondary" full onClick={()=>setWorkoutChooserPrompt(true)}>Start today’s workout</Button>
   </div>
 
-  <div className="panel symptomsPanel">
-    <button type="button" className="toggleHeaderButton" onClick={()=>setShowTodaySymptoms(v=>!v)}>
-      <span><AlertTriangle size={20}/> Symptoms checklist</span>
-      <b>{showTodaySymptoms ? "Hide" : "Click to do"}</b>
-    </button>
-    {showTodaySymptoms&&<div className="todaySymptomToggleGrid">
-      <button type="button" className={backPain>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("backPain")}><span>Back pain</span><b>{backPain>0?"Yes":"No"}</b></button>
-      <button type="button" className={nerve>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("nerve")}><span>Leg nerve/numbness</span><b>{nerve>0?"Yes":"No"}</b></button>
-      <button type="button" className={anklePain>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("anklePain")}><span>Ankle pain</span><b>{anklePain>0?"Yes":"No"}</b></button>
-      <button type="button" className={ankleStability<=3?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("ankleStability")}><span>Ankle unstable</span><b>{ankleStability<=3?"Yes":"No"}</b></button>
-      <button type="button" className={shoulder>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("shoulder")}><span>Shoulder sensation</span><b>{shoulder>0?"Yes":"No"}</b></button>
-    </div>}
-  </div>
-
-  {trackCycle==="yes"&&<div className="panel cycleTodayCard">
+  <div className="panel cycleTodayCard">
     <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
     <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
       <h3 className="phaseLarge">{currentCycle.phase}</h3>
@@ -571,7 +571,7 @@ export default function App(){
       <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
     </div>
     <button type="button" className="pastelLinkBox" onClick={()=>setTab("cycle")}>Open Cycle tab</button>
-  </div>}
+  </div>
 
   <div className={`readiness panel ${readinessZone.toLowerCase()}`}>
     <div className="row">
@@ -585,102 +585,68 @@ export default function App(){
 
   <textarea className="notes" placeholder="Notes…" value={notes} onChange={e=>setNotes(e.target.value)}/>
 
-  <Button variant="primary" full busy={busy.save} onClick={recordDayAndPromptWorkout}><Save size={16}/> Record the day</Button>
+  <Button variant="primary" full busy={busy.save} onClick={recordDayAndPromptWorkout}><Save size={16}/> {dayRecordedToday ? "Start workout" : "Record and start workout"}</Button>
 
-  <div className="panel">
-    <div className="sectionTitle"><Dumbbell size={20}/><h2>Let’s begin your workout</h2></div>
-    <div className="builderToggle">
-      <button className={builderMode==="recommended"?"active":""} onClick={()=>setBuilderMode("recommended")}>Recommended</button>
-      <button className={builderMode==="custom"?"active":""} onClick={buildCustomWorkout}>Build your own</button>
-    </div>
-    {builderMode==="recommended"&&<div className="planStack">{Object.entries(recommendedPlans).map(([k,p])=><button key={k} className="plan" onClick={()=>applyRecommendedPlan(k)}><span><b>{p.title}</b><small>{p.focus}</small></span><span>{p.exercises.length}</span></button>)}</div>}
-  </div>
+  
 </section>}
     {tab==="workout"&&<section className="stack"><div className="panel workoutHeader"><div><input className="workoutNameInput" value={type} onChange={e=>setType(e.target.value)} /><p className="muted">{workoutSource} · {workoutExercises.length} exercises · {totalSets} sets</p></div><Button variant="secondary" onClick={()=>setTab("library")}><Plus size={16}/> Add</Button></div>{workoutExercises.length===0&&<div className="empty"><Dumbbell size={28}/><h2>No exercises yet</h2><p>Add exercises from the library or start with a recommended plan.</p><Button full onClick={()=>setTab("library")}><Plus size={16}/> Add exercise</Button></div>}{workoutExercises.map(ex=><div className="panel exerciseCard" key={ex.localId}><div className="exerciseTop"><button className="collapseBtn" onClick={()=>updateWorkoutExercise(ex.localId,{collapsed:!ex.collapsed})}>{ex.collapsed?<ChevronDown size={18}/>:<ChevronUp size={18}/>}</button><div><h3>{ex.name}</h3><p className="muted">{ex.status} · {ex.category} · {ex.source}</p>{ex.previous&&<p className="previous">Previous: {ex.previous.weight??"—"}{ex.previous.weightUnit||"kg"} × {ex.previous.reps??"—"}</p>}</div><button className="iconBtn" onClick={()=>removeExercise(ex.localId)}><Trash2 size={16}/></button></div>{ex.coachNote&&<p className="note">{ex.coachNote}</p>}{!ex.collapsed&&<><div className="miniGrid"><label className="field"><span>Target sets</span><input inputMode="numeric" value={ex.targetSets} onChange={e=>updateWorkoutExercise(ex.localId,{targetSets:e.target.value})}/></label><label className="field"><span>Target reps</span><input value={ex.targetReps} onChange={e=>updateWorkoutExercise(ex.localId,{targetReps:e.target.value})}/></label></div><div className="setHeader noRpe"><span>Set</span><span>Weight</span><span>Reps</span><span></span></div><div className="sets">{ex.sets.map((s,i)=><div className="setRow noRpe" key={i}><b>{i+1}</b><input placeholder="kg" inputMode="decimal" value={s.weight} onChange={e=>updateSet(ex.localId,i,{weight:e.target.value})}/><input placeholder="reps" inputMode="numeric" value={s.reps} onChange={e=>updateSet(ex.localId,i,{reps:e.target.value})}/><button className="setDelete" onClick={()=>removeSet(ex.localId,i)}>×</button></div>)}</div><div className="twoCol"><Button variant="ghost" onClick={()=>addSet(ex.localId)}><Plus size={16}/> Add set</Button><Button variant="ghost" onClick={()=>duplicateLastSet(ex.localId)}>Copy the last set</Button></div><details className="symptomDetails"><summary>Exercise symptom check</summary><div className="miniGrid">{["Back","Nerve","Ankle","Shoulder"].map(label=>{const key=label.toLowerCase()+"DuringExercise";return <label className="field" key={key}><span>{label}</span><input inputMode="numeric" value={ex[key]} onChange={e=>updateWorkoutExercise(ex.localId,{[key]:e.target.value})}/></label>})}</div></details><textarea className="notes small" placeholder="Exercise notes…" value={ex.notes} onChange={e=>updateWorkoutExercise(ex.localId,{notes:e.target.value})}/></>}</div>)}<div className="twoCol"><Button variant="secondary" full onClick={saveDraft}>Save draft</Button><Button variant="secondary" full busy={busy.template} onClick={saveTemplate}>Save as Notion template</Button></div>{activeWorkout ? <Button variant="primary" full busy={busy.save} disabled={!workoutExercises.length} onClick={()=>setEndPrompt(true)}><Save size={16}/> End Today’s workout</Button> : <Button variant="primary" full busy={busy.save} disabled={!workoutExercises.length} onClick={startCurrentWorkout}><Save size={16}/> Start Today’s workout</Button>}<Button variant="ghost" full onClick={()=>{setWorkoutExercises([]);setNotes("");show("Draft cleared.","success")}}><RotateCcw size={16}/> Clear current draft</Button>{drafts.length>0&&<div className="panel"><h2>Saved drafts</h2><div className="sessionList">{drafts.map(d=><div className="sessionItem" key={d.id}><div className="row"><b>{d.name}</b><button className="linkBtn" onClick={()=>deleteDraft(d.id)}>Delete</button></div><Button variant="secondary" full onClick={()=>loadDraft(d)}>Load draft</Button></div>)}</div></div>}</section>}
     {tab==="library"&&<section className="stack"><div className="panel"><div className="sectionTitle"><Library size={20}/><h2>Exercise Library</h2></div><Button variant="secondary" full onClick={()=>document.getElementById("custom-exercise-form")?.scrollIntoView({behavior:"smooth"})}><Plus size={16}/> Add custom exercise to library</Button><div className="search"><Search size={16}/><input placeholder="Search exercises…" value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="twoCol"><select className="input compact" value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}><option>All</option>{categoryOptions.map(x=><option key={x}>{x}</option>)}</select><select className="input compact" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option>All</option>{statusOptions.map(x=><option key={x}>{x}</option>)}</select></div></div><div className="exerciseList">{filtered.map(e=><div className={`libraryItem ${e.status?.toLowerCase().replaceAll(" ","-")}`} key={e.id}><button onClick={()=>addExercise(e)}><div><b>{e.exercise}</b><p>{e.category} · {e.status}</p><small>{e.coachNote}</small></div><Plus size={18}/></button><button className="historyBtn" onClick={()=>showExerciseHistory(e)}><History size={16}/> History</button></div>)}</div><div className="panel" id="custom-exercise-form"><div className="sectionTitle"><Plus size={20}/><h2>Create custom exercise</h2></div><input className="input" placeholder="Exercise name" value={custom.exercise} onChange={e=>setCustom({...custom,exercise:e.target.value})}/><div className="twoCol"><select className="input" value={custom.category} onChange={e=>setCustom({...custom,category:e.target.value})}>{categoryOptions.map(x=><option key={x}>{x}</option>)}</select><select className="input" value={custom.status} onChange={e=>setCustom({...custom,status:e.target.value})}>{statusOptions.map(x=><option key={x}>{x}</option>)}</select></div><select className="input" value={custom.movementPattern} onChange={e=>setCustom({...custom,movementPattern:e.target.value})}>{movementOptions.map(x=><option key={x}>{x}</option>)}</select><input className="input" placeholder="Equipment, comma-separated" value={custom.equipment} onChange={e=>setCustom({...custom,equipment:e.target.value})}/><input className="input" placeholder="Primary muscles, comma-separated" value={custom.primaryMuscles} onChange={e=>setCustom({...custom,primaryMuscles:e.target.value})}/><input className="input" placeholder="Risk flags, comma-separated" value={custom.riskFlags} onChange={e=>setCustom({...custom,riskFlags:e.target.value})}/><div className="miniGrid"><label className="field"><span>Default sets</span><input value={custom.defaultSets} onChange={e=>setCustom({...custom,defaultSets:e.target.value})}/></label><label className="field"><span>Default reps</span><input value={custom.defaultReps} onChange={e=>setCustom({...custom,defaultReps:e.target.value})}/></label></div><textarea className="notes small" placeholder="Coach note" value={custom.coachNote} onChange={e=>setCustom({...custom,coachNote:e.target.value})}/><Button full busy={busy.custom} onClick={createCustomExercise}><Plus size={16}/> Save custom exercise</Button></div></section>}
     {tab==="progress"&&<section className="stack"><div className="panel"><div className="sectionTitle"><BarChart3 size={20}/><h2>Progress Dashboard</h2></div><Button variant="secondary" full busy={busy.history} onClick={()=>loadHistory(true)}>Refresh progress</Button>{history.error&&<p className="errorText">{history.error}</p>}</div><div className="statsGrid"><Stat label="Total logs" value={history.summary?.totalLogs}/><Stat label="Workouts" value={history.summary?.workouts}/><Stat label="Avg readiness" value={history.summary?.avgReadiness}/><Stat label="Avg sleep" value={history.summary?.avgSleep}/><Stat label="Avg ankle pain" value={history.summary?.avgAnklePain}/><Stat label="Avg back pain" value={history.summary?.avgBackPain}/></div><WeeklyMonthlyOverview sessions={history.sessions}/><MiniChart title="Readiness trend" data={history.sessions} keyName="readiness" max={25}/><MiniChart title="Ankle pain trend" data={history.sessions} keyName="anklePain" max={10}/><div className="panel"><h2>Recent sessions</h2><div className="sessionList">{history.sessions.slice(0,12).map(s=><div className="sessionItem" key={s.id}><div className="row"><b>{s.date||"No date"}</b><span className="pill">{s.readiness??"—"}/25</span></div><p className="muted">{s.type||"Log"} · Back {s.backPain??"—"} · Nerve {s.nerveSymptoms??"—"} · Ankle {s.anklePain??"—"} · Shoulder {s.shoulder??"—"}</p>{s.notes&&<p className="note">{s.notes}</p>}</div>)}</div></div></section>}
     {tab==="exerciseHistory"&&<section className="stack"><div className="panel"><div className="sectionTitle"><History size={20}/><h2>{selectedHistoryExercise?.exercise||"Exercise"} History</h2></div><Button variant="secondary" full onClick={()=>setTab("library")}>Back to library</Button></div>{busy.exerciseHistory&&<div className="panel"><Spinner on/> Loading history…</div>}{exerciseHistory&&<><div className="statsGrid"><Stat label="Entries" value={exerciseHistory.summary?.entries}/><Stat label="Sets" value={exerciseHistory.summary?.totalSets}/><Stat label="Best weight" value={exerciseHistory.summary?.bestSet?.weight}/><Stat label="Best reps" value={exerciseHistory.summary?.bestSet?.reps}/></div><div className="panel"><h2>Past sets</h2><div className="sessionList">{exerciseHistory.sets.map(s=><div className="sessionItem" key={s.id}><div className="row"><b>{s.setEntry}</b><span className="pill">{s.weight??"—"}{s.weightUnit||"kg"} × {s.reps??"—"}</span></div><p className="muted">RPE {s.rpe??"—"} · {s.workoutExerciseName}</p></div>)}</div></div></>}</section>}
-    {trackCycle==="yes"&&tab==="cycle"&&<section className="stack"><div className="panel cyclePanel periodStatusPanel">
-      <div className="sectionTitle"><CalendarPlus size={20}/><h2>Period dates</h2></div><div className="nextDuePanel"><span>Next period is due in</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} days</b></div>
-      {!cycle.periodStartDate && (
-        <div className="periodStateBox waiting">
-          
-          <h3>{currentCycle.phase}</h3>
-          <div className="centerControl wide80">
-            <Button variant="primary" full onClick={()=>markPeriodStarted(true)}>Period Started Today</Button>
-          </div>
-        </div>
-      )}
-
-      {cycle.periodStartDate && !cycle.periodEndDate && (
-        <div className="periodStateBox activePeriod">
-          
-          <h3>Day {inclusiveDays(cycle.periodStartDate, date) || currentCycle.cycleDay || "—"}</h3>
-          <p>Started: <b>{cycle.periodStartDate}</b></p>
-          <div className="centerControl wide80">
-            <Button variant="primary" full onClick={()=>openPeriodDateBox("end")}>Period Ended</Button>
-          </div>
-        </div>
-      )}
-
-      {cycle.periodStartDate && cycle.periodEndDate && (
-        <div className="periodStateBox endedPeriod">
-          
-          <h3>{inclusiveDays(cycle.periodStartDate, cycle.periodEndDate) || "—"} days recorded</h3>
-          <p>Start: <b>{cycle.periodStartDate}</b></p>
-          <p>End: <b>{cycle.periodEndDate}</b></p>
-          <div className="centerControl wide80">
-            <Button variant="secondary" full onClick={resetPeriodFlow}>OK</Button>
-          </div>
-        </div>
-      )}
-
-      {periodDateMode && (
-        <div className="periodDatePopup">
-          <h3>{periodDateMode==="start" ? "Choose period start date" : "Choose period end date"}</h3>
-          <input type="date" value={pendingPeriodDate} onChange={e=>setPendingPeriodDate(e.target.value)}/>
-          <div className="periodPopupActions">
-            <button type="button" className="ghost smallButton" onClick={()=>setPeriodDateMode(null)}>Cancel</button>
-            <button type="button" className="primary smallButton" onClick={confirmPeriodDate}>Save</button>
-          </div>
-        </div>
-      )}
-
-      <div className="previousPeriodBox">
-        <button type="button" className="pastelLinkBox smallPreviousCycleButton" onClick={()=>setShowPreviousPeriodBox(v=>!v)}>Add previous cycle</button>
-        {showPreviousPeriodBox&&<div className="previousPeriodFields previousPeriodFieldsSide">
-          <label className="field"><span>Start</span><input type="date" value={previousPeriod.start} onChange={e=>setPreviousPeriod({...previousPeriod,start:e.target.value})}/></label>
-          <label className="field"><span>End</span><input type="date" value={previousPeriod.end} onChange={e=>setPreviousPeriod({...previousPeriod,end:e.target.value})}/></label>
-          <Button variant="secondary" full onClick={savePreviousPeriodDates}>Save cycle</Button>
-        </div>}
+    {trackCycle==="yes"&&tab==="cycle"&&<section className="stack">
+  <div className="panel cycleTodayCard">
+    <div className="sectionTitle"><Sparkles size={20}/><h2>Your cycle</h2></div>
+    <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
+      <h3>{currentCycle.phase}</h3>
+      <div className="cycleHeroGrid todayCycleGrid">
+        <div className="nextPeriodBox"><span>Next period is due</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} days</b></div>
       </div>
+      <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
     </div>
-
-    <div className="panel cyclePanel">
-      <div className="sectionTitle"><Activity size={20}/><h2>Cycle-aware check-in</h2></div>
-      <div className="cycleCheckDateDisplay">{formatAuLongDate(todayIso())}</div>
-      <div className="field flowField"><span>Flow</span><div className="flowBubbleGrid">{["Spotting","Light","Medium","Heavy","Clots"].map(option=><button type="button" key={option} className={(cycle.flowOptions||[]).includes(option)?"flowBubble active":"flowBubble"} onClick={()=>toggleFlow(option)}>{option}</button>)}</div></div>
-      <div className="symptomButtonGrid compactSymptoms">
-        <button type="button" className={cycle.headacheMigraine>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("headacheMigraine")}><span>Headache / migraine</span><b>{cycle.headacheMigraine>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.saltCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("saltCravings")}><span>Salt cravings</span><b>{cycle.saltCravings>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.sugarCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sugarCravings")}><span>Sugar cravings</span><b>{cycle.sugarCravings>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.cramps>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("cramps")}><span>Cramps</span><b>{cycle.cramps>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.indigestion>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("indigestion")}><span>Indigestion</span><b>{cycle.indigestion>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.bloating>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("bloating")}><span>Bloating</span><b>{cycle.bloating>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.constipation>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("constipation")}><span>Constipation</span><b>{cycle.constipation>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.tenderBreasts>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("tenderBreasts")}><span>Tender breasts</span><b>{cycle.tenderBreasts>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.acne>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("acne")}><span>Acne</span><b>{cycle.acne>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.dizziness>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("dizziness")}><span>Dizziness</span><b>{cycle.dizziness>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.sleepDisruption>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sleepDisruption")}><span>Sleep disruption</span><b>{cycle.sleepDisruption>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.moodSwings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("moodSwings")}><span>Mood swings</span><b>{cycle.moodSwings>0?"Yes":"No"}</b></button>
-        <button type="button" className={cycle.fatigue>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("fatigue")}><span>Fatigue</span><b>{cycle.fatigue>0?"Yes":"No"}</b></button>
+    <div className="centerControl wide80">
+      <Button variant="primary" full onClick={()=>openPeriodDateBox("start")}>Period started</Button>
+    </div>
+    {periodDateMode==="start"&&(
+      <div className="periodDatePopup">
+        <h3>Confirm period start date</h3>
+        <input type="date" value={pendingPeriodDate} onChange={e=>setPendingPeriodDate(e.target.value)}/>
+        <div className="periodPopupActions">
+          <button type="button" className="ghost smallButton" onClick={()=>setPeriodDateMode(null)}>Cancel</button>
+          <button type="button" className="primary smallButton" onClick={confirmPeriodDate}>Save</button>
+        </div>
       </div>
-      <textarea className="notes small" placeholder="Daily cycle notes…" value={cycle.notes} onChange={e=>setCycle({...cycle,notes:e.target.value})}/>
-      <div className="centerControl wide80"><Button variant="primary" full onClick={saveCycleCheck}>Save today’s check-in</Button></div>
-      {cycleStatus&&<p className="errorText">{cycleStatus}</p>}
-    </div>
+    )}
+  </div>
 
-    </section>}{tab==="rules"&&<section className="stack"><div className="panel"><div className="sectionTitle"><Activity size={20}/><h2>Check</h2></div></div>
-    {trackCycle==="yes"&&<div className="panel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><Button variant="secondary" full onClick={()=>setTab("cycle")}>Open Cycle tab</Button></div>}<div className="checkGrid"><div className="panel checkCard"><div className="sectionTitle"><Soup size={20}/><h3>Food choice</h3></div><ul><li>Protein at each meal when possible.</li><li>Pair carbs with protein around training for energy and recovery.</li><li>Hydrate before gym; add electrolytes if walking/training in heat.</li><li>Keep a quick fallback meal ready so fatigue does not become snack-chaos goblin time.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><Moon size={20}/><h3>Sleep hygiene</h3></div><ul><li>Same wake time most days.</li><li>Dim screens/bright lights in the final 30–60 minutes.</li><li>Avoid caffeine late afternoon/evening.</li><li>Keep the room cool, dark and boring in the best way.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><StretchHorizontal size={20}/><h3>Mobility / stretching</h3></div><ul><li>Before training: gentle dynamic warm-up, not aggressive stretching.</li><li>For ankle: controlled band work and balance before lower-body sessions.</li><li>For back: bird dog/dead bug style activation beats heavy flexion.</li><li>After training: relaxed stretching and breathing to downshift.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><AlertTriangle size={20}/><h3>Modify today if…</h3></div><ul><li>Nerve symptoms are up from baseline.</li><li>Left ankle feels unstable before warm-up.</li><li>Shoulder feels odd during the first warm-up sets.</li><li>Sleep/energy are poor: reduce load 10–20%.</li></ul></div></div><div className="panel"><h2>Menstruation tracking setting</h2><div className="twoCol"><Button variant={trackCycle==="yes"?"primary":"secondary"} onClick={()=>changeCycleTracking("yes")}>Track menstruation</Button><Button variant={trackCycle==="no"?"primary":"secondary"} onClick={()=>changeCycleTracking("no")}>Hide cycle tracking</Button></div></div><div className="panel"><h2>API checks</h2><p className="muted"><code>/api/health</code>, <code>/api/exercises</code>, <code>/api/history</code>, <code>/api/exercise-history?exerciseId=...</code></p></div></section>}
-  </main><nav className={`bottomNav ${activeWorkout && trackCycle==="yes" ? "six" : "five"}`}><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button>{activeWorkout&&<button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button>}<button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button>{trackCycle==="yes"&&<button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button>}<button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
+  <div className="panel">
+    <h2>Previous cycles</h2>
+    <div className="sessionList">{cycleLogs.filter(log=>log.periodStartDate).slice(0,8).map(log=><div className="sessionItem" key={log.id}><div className="row"><b>{formatAuDate(log.periodStartDate)} – {formatAuDate(log.periodEndDate)}</b><button className="linkBtn dangerLink" onClick={()=>archiveCycleLog(log.id)}>Delete</button></div><p className="muted">{log.cyclePhase||"Cycle"} · {log.periodLength??"—"} days</p></div>)}</div>
+  </div>
+
+  <div className="panel cyclePanel">
+    <div className="sectionTitle"><Activity size={20}/><h2>Cycle-aware check-in</h2></div>
+    <div className="centeredDatePlain">{formatAuDate(todayIso())}</div>
+    <label className="field"><span>Flow</span><div className="flowBubbleGrid">{["Spotting","Light","Medium","Heavy","Clots"].map(option=><button type="button" key={option} className={(Array.isArray(cycle.bleedingFlow)?cycle.bleedingFlow:[]).includes(option)?"flowBubble active":"flowBubble"} onClick={()=>toggleFlow(option)}>{option}</button>)}</div></label>
+    <div className="symptomButtonGrid">
+      <button type="button" className={cycle.headacheMigraine>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("headacheMigraine")}><span>Headache / migraine</span><b>{cycle.headacheMigraine>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.saltCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("saltCravings")}><span>Salt cravings</span><b>{cycle.saltCravings>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.sugarCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sugarCravings")}><span>Sugar cravings</span><b>{cycle.sugarCravings>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.cramps>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("cramps")}><span>Cramps</span><b>{cycle.cramps>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.indigestion>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("indigestion")}><span>Indigestion</span><b>{cycle.indigestion>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.bloating>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("bloating")}><span>Bloating</span><b>{cycle.bloating>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.constipation>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("constipation")}><span>Constipation</span><b>{cycle.constipation>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.tenderBreasts>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("tenderBreasts")}><span>Tender breasts</span><b>{cycle.tenderBreasts>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.acne>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("acne")}><span>Acne</span><b>{cycle.acne>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.dizziness>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("dizziness")}><span>Dizziness</span><b>{cycle.dizziness>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.sleepDisruption>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sleepDisruption")}><span>Sleep disruption</span><b>{cycle.sleepDisruption>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.moodSwings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("moodSwings")}><span>Mood swings</span><b>{cycle.moodSwings>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.fatigue>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("fatigue")}><span>Fatigue</span><b>{cycle.fatigue>0?"Yes":"No"}</b></button>
+    </div>
+    <textarea className="notes small" placeholder="Daily cycle notes…" value={cycle.notes} onChange={e=>setCycle({...cycle,notes:e.target.value})}/>
+    <div className="centerControl wide80"><Button variant="primary" full onClick={saveCycleCheck}>Save today’s check-in</Button></div>
+    {cycleStatus&&<p className="errorText">{cycleStatus}</p>}
+  </div>
+</section>}{tab==="rules"&&<section className="stack"><div className="panel"><div className="sectionTitle"><Activity size={20}/><h2>Check</h2></div></div>
+    <div className="panel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><Button variant="secondary" full onClick={()=>setTab("cycle")}>Open Cycle tab</Button></div><div className="checkGrid"><div className="panel checkCard"><div className="sectionTitle"><Soup size={20}/><h3>Food choice</h3></div><ul><li>Protein at each meal when possible.</li><li>Pair carbs with protein around training for energy and recovery.</li><li>Hydrate before gym; add electrolytes if walking/training in heat.</li><li>Keep a quick fallback meal ready so fatigue does not become snack-chaos goblin time.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><Moon size={20}/><h3>Sleep hygiene</h3></div><ul><li>Same wake time most days.</li><li>Dim screens/bright lights in the final 30–60 minutes.</li><li>Avoid caffeine late afternoon/evening.</li><li>Keep the room cool, dark and boring in the best way.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><StretchHorizontal size={20}/><h3>Mobility / stretching</h3></div><ul><li>Before training: gentle dynamic warm-up, not aggressive stretching.</li><li>For ankle: controlled band work and balance before lower-body sessions.</li><li>For back: bird dog/dead bug style activation beats heavy flexion.</li><li>After training: relaxed stretching and breathing to downshift.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><AlertTriangle size={20}/><h3>Modify today if…</h3></div><ul><li>Nerve symptoms are up from baseline.</li><li>Left ankle feels unstable before warm-up.</li><li>Shoulder feels odd during the first warm-up sets.</li><li>Sleep/energy are poor: reduce load 10–20%.</li></ul></div></div><div className="panel"><h2>API checks</h2><p className="muted"><code>/api/health</code>, <code>/api/exercises</code>, <code>/api/history</code>, <code>/api/exercise-history?exerciseId=...</code></p></div></section>}
+  </main><nav className={`bottomNav ${activeWorkout ? "six" : "five"}`}><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button>{activeWorkout&&<button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button>}<button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button><button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button><button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
 }
