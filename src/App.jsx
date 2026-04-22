@@ -26,7 +26,7 @@ function makeExercise(ex,source="Added"){const targetSets=Math.max(1,num(ex.defa
 function Spinner({on}){return on?<Loader2 size={16} className="spin"/>:null}
 function Button({children,onClick,variant="primary",busy=false,disabled=false,full=false}){return <button className={`${variant} ${full?"full":""}`} disabled={busy||disabled} onClick={(e)=>{e.currentTarget.classList.add("ack");setTimeout(()=>e.currentTarget.classList.remove("ack"),260);onClick&&onClick(e)}}>{busy&&<Spinner on/>}{children}</button>}
 function Toast({toast,onClose}){return toast.message?<div className={`toast ${toast.kind}`}><span>{toast.message}</span><button onClick={onClose}>×</button></div>:null}
-function Slider({label,value,setValue,lowGood=true}){return <label className="slider"><div className="row"><span>{label}</span><b>{value}</b></div><input type="range" min="0" max="10" value={value} onChange={e=>setValue(Number(e.target.value))} onPointerUp={e=>{e.currentTarget.classList.add("ack");setTimeout(()=>e.currentTarget.classList.remove("ack"),260)}}/><div className="rangeLabels"><span>{lowGood?"low":"poor"}</span><span>{lowGood?"high":"great"}</span></div></label>}
+function Slider({label,value,setValue,lowGood=true,midLabel=false}){return <label className="slider"><div className="row"><span>{label}</span><b>{value}</b></div><input type="range" min="0" max="10" value={value} onChange={e=>setValue(Number(e.target.value))} onPointerUp={e=>{e.currentTarget.classList.add("ack");setTimeout(()=>e.currentTarget.classList.remove("ack"),260)}}/><div className={midLabel?"rangeLabels three":"rangeLabels"}><span>{lowGood?"low":"poor"}</span>{midLabel&&<span>{midLabel}</span>}<span>{lowGood?"high":"great"}</span></div></label>}
 function Stat({label,value}){return <div className="stat"><p>{label}</p><strong>{value??"—"}</strong></div>}
 function MiniChart({title,data,keyName,max=25}){const points=data.slice(0,10).reverse();const w=300,h=120,pad=16;const vals=points.map((p)=>typeof p[keyName]==="number"?p[keyName]:0);const coords=vals.map((v,i)=>{const x=points.length<=1?w/2:pad+(i*(w-pad*2))/(points.length-1);const y=h-pad-(Math.max(0,Math.min(max,v))/max)*(h-pad*2);return `${x},${y}`});return <div className="chart"><h3>{title}</h3><svg viewBox={`0 0 ${w} ${h}`} className="lineChart" preserveAspectRatio="none"><polyline points={coords.join(" ")} fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>{coords.map((c,i)=>{const [x,y]=c.split(",").map(Number);return <circle key={i} cx={x} cy={y} r="4"/>})}</svg><div className="chartLabels">{points.map((p,i)=><small key={i}>{p[keyName]??"—"}</small>)}</div></div>}function WeeklyMonthlyOverview({sessions}){const valid=sessions.filter(s=>s.date);const now=new Date();const inDays=(days)=>valid.filter(s=>{const d=new Date(s.date);return (now-d)/(1000*60*60*24)<=days&&(now-d)>=0});const week=inDays(7);const month=inDays(31);const avg=(arr,key)=>{const vals=arr.map(s=>s[key]).filter(v=>typeof v==="number");return vals.length?Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*10)/10:"—"};const countWorkouts=(arr)=>arr.filter(s=>s.type!=="Readiness only").length;return <div className="overviewGrid"><div className="panel miniOverview"><h3>Weekly overview</h3><p><b>{countWorkouts(week)}</b> workouts</p><p>Avg readiness: <b>{avg(week,"readiness")}</b></p><p>Avg sleep: <b>{avg(week,"sleep")}</b></p><p>Avg ankle pain: <b>{avg(week,"anklePain")}</b></p></div><div className="panel miniOverview"><h3>Monthly overview</h3><p><b>{countWorkouts(month)}</b> workouts</p><p>Avg readiness: <b>{avg(month,"readiness")}</b></p><p>Avg sleep: <b>{avg(month,"sleep")}</b></p><p>Avg ankle pain: <b>{avg(month,"anklePain")}</b></p></div></div>}
 
@@ -248,6 +248,7 @@ export default function App(){
   const [query,setQuery]=useState(""); const [categoryFilter,setCategoryFilter]=useState("All"); const [statusFilter,setStatusFilter]=useState("All");
   const [builderMode,setBuilderMode]=useState("recommended");
   const [startPrompt,setStartPrompt]=useState(null);
+  const [customWorkoutPrompt,setCustomWorkoutPrompt]=useState(false);
   const [endPrompt,setEndPrompt]=useState(false);
   const [activeWorkout,setActiveWorkout]=useState(null);
   const [date,setDate]=useState(todayIso()); const [type,setType]=useState("Lower A"); const [workoutSource,setWorkoutSource]=useState("Recommended");
@@ -257,11 +258,19 @@ export default function App(){
   const [cycle,setCycle]=useState({date:todayIso(),dailyEntryDate:todayIso(),periodStartDate:"",periodEndDate:"",flowOptions:[],cramps:0,sleepDisruption:0,moodSwings:0,fatigue:0,headacheMigraine:0,saltCravings:0,sugarCravings:0,indigestion:0,bloating:0,constipation:0,tenderBreasts:0,acne:0,dizziness:0,notes:""});
   const [periodDateMode,setPeriodDateMode]=useState(null);
   const [pendingPeriodDate,setPendingPeriodDate]=useState(todayIso());
+  const [showPreviousPeriodBox,setShowPreviousPeriodBox]=useState(false);
+  const [previousPeriod,setPreviousPeriod]=useState({start:"",end:""});
   const [cycleLogs,setCycleLogs]=useState([]);
   const [cycleStatus,setCycleStatus]=useState("");
 
   function show(message,kind="info"){setToast({message,kind});setTimeout(()=>setToast(t=>t.message===message?{message:"",kind:"info"}:t),3500)}
   function toggleSymptom(key){setCycle(c=>({...c,[key]:Number(c[key]||0)>0?0:6}))}
+  function toggleTodaySymptom(key){
+    if(key==="ankleStability"){ setAnkleStability(v=>v<=3?7:3); return; }
+    const setters={backPain:setBackPain,nerve:setNerve,anklePain:setAnklePain,shoulder:setShoulder};
+    const current={backPain,nerve,anklePain,shoulder}[key];
+    setters[key]?.(Number(current||0)>0?0:6);
+  }
   function toggleFlow(option){
     setCycle(c=>{
       const current=Array.isArray(c.flowOptions)?c.flowOptions:[].concat(c.bleedingFlow||[]).filter(Boolean);
@@ -338,7 +347,9 @@ export default function App(){
   }
   function addExercise(ex,source="Added"){if(workoutSource==="Recommended")setWorkoutSource("Modified Recommended");const next=makeExercise(ex,source);setWorkoutExercises(prev=>[...prev,next]);setTab("workout");show(`${ex.exercise} added.`,"success");setTimeout(()=>hydratePrevious(next),100)}
   function applyRecommendedPlan(key){setStartPrompt(key)}
-  async function buildCustomWorkout(){
+  function buildCustomWorkout(){setBuilderMode("custom");setCustomWorkoutPrompt(true)}
+  async function startCustomWorkout(){
+    setCustomWorkoutPrompt(false);
     setBuilderMode("custom");
     setType("Custom Workout");
     setWorkoutSource("Custom");
@@ -441,10 +452,35 @@ export default function App(){
     show(`Period end marked: ${chosen}`,"success");
   }
 
+  async function savePreviousPeriodDates(){
+    if(!previousPeriod.start || !previousPeriod.end) return show("Choose both start and end dates.","error");
+    const payload={
+      ...cycle,
+      date:previousPeriod.end,
+      periodStartDate:previousPeriod.start,
+      periodEndDate:previousPeriod.end,
+      periodLength:inclusiveDays(previousPeriod.start,previousPeriod.end),
+      cycleLength:currentCycle.averageCycleLength,
+      cycleDay:null,
+      cyclePhase:"",
+      trainingRecommendation:"Normal training",
+      flowOptions:[],
+      bleedingFlow:""
+    };
+    try{
+      const r=await fetch("/api/cycle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const j=await r.json();
+      if(!r.ok)throw new Error(j.error||"Previous period save failed");
+      setShowPreviousPeriodBox(false); setPreviousPeriod({start:"",end:""});
+      await loadCycleLogs(false);
+      show("Previous period dates saved.","success");
+    }catch(e){show(`Previous period save failed: ${e.message}`,"error")}
+  }
+
   async function saveCycleCheck(){
     const payload={
       ...cycle,
-      date:cycle.dailyEntryDate || date,
+      date:todayIso(),
       periodStartDate:cycle.periodStartDate,
       periodEndDate:cycle.periodEndDate,
       periodLength:inclusiveDays(cycle.periodStartDate,cycle.periodEndDate),
@@ -474,35 +510,30 @@ export default function App(){
   async function showExerciseHistory(ex){setSelectedHistoryExercise(ex);setTab("exerciseHistory");setBusy(b=>({...b,exerciseHistory:true}));try{const r=await fetch(`/api/exercise-history?exerciseId=${ex.id}`);const j=await r.json();if(!r.ok)throw new Error(j.error||"History failed");setExerciseHistory(j)}catch(e){show(`History failed: ${e.message}`,"error")}finally{setBusy(b=>({...b,exerciseHistory:false}))}}
 
   return <div className={`app ${activeWorkout ? "activeWorkoutMode" : ""}`}><Toast toast={toast} onClose={()=>setToast({message:"",kind:"info"})}/>
-      {startPrompt&&<div className="modalShade"><div className="modalBox"><h2>Do you want to start today’s workout?</h2><p>{recommendedPlans[startPrompt]?.title}</p><div className="twoCol"><Button variant="secondary" onClick={()=>setStartPrompt(null)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={()=>startWorkoutFromPlan(startPrompt)}>Yes</Button></div></div></div>}
+      {startPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you ready to begin your workout?</h2><p>{recommendedPlans[startPrompt]?.title}</p><div className="twoCol"><Button variant="secondary" onClick={()=>setStartPrompt(null)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={()=>startWorkoutFromPlan(startPrompt)}>Yes</Button></div></div></div>}
+      {customWorkoutPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you ready to begin your workout?</h2><p>Build your own workout</p><div className="twoCol"><Button variant="secondary" onClick={()=>setCustomWorkoutPrompt(false)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={startCustomWorkout}>Yes</Button></div></div></div>}
       {endPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you sure?</h2><p>End today’s workout and record it to Notion?</p><div className="twoCol"><Button variant="secondary" onClick={()=>setEndPrompt(false)}>No</Button><Button variant="primary" busy={busy.save} onClick={endTodayWorkout}>Yes</Button></div></div></div>}
       <main className="shell"><header className="header"><div><p className="overline">Muscle Queens</p><h1>Dashboard</h1></div><button className="mini" onClick={()=>loadExercises(true)} disabled={busy.library}><Spinner on={busy.library}/> Sync</button></header>
     {tab==="today"&&<section className="stack dashboardToday">
   <div className="panel readinessCheckPanel">
     <div className="sectionTitle"><CalendarDays size={20}/><h2>Are you ready for a workout?</h2></div>
-    <div className="todayDateDisplay">{formatAuLongDate(date)}</div>
+    <div className="todayDatePlain">{formatAuLongDate(todayIso())}</div>
     <div className="readinessInputs">
-      <Slider label="Sleep quality" value={sleep} setValue={setSleep} lowGood={false}/>
-      <Slider label="Energy" value={energy} setValue={setEnergy} lowGood={false}/>
-      <Slider label="Stress" value={stress} setValue={setStress}/>
+      <Slider label="Sleep quality" value={sleep} setValue={setSleep} lowGood={false} midLabel="Okay"/>
+      <Slider label="Energy level" value={energy} setValue={setEnergy} lowGood={false} midLabel="Okay"/>
+      <Slider label="Stress level" value={stress} setValue={setStress} midLabel="Okay"/>
     </div>
   </div>
 
   <div className="panel symptomsPanel">
     <div className="sectionTitle"><AlertTriangle size={20}/><h2>Symptoms checklist</h2></div>
-    <Slider label="Back pain" value={backPain} setValue={setBackPain}/>
-    <Slider label="Left leg nerve/numbness" value={nerve} setValue={setNerve}/>
-    <Slider label="Left ankle pain" value={anklePain} setValue={setAnklePain}/>
-    <Slider label="Left ankle stability" value={ankleStability} setValue={setAnkleStability} lowGood={false}/>
-    <Slider label="Left shoulder sensation/pain" value={shoulder} setValue={setShoulder}/>
-  </div>
-
-  <div className={`readiness panel ${readinessZone.toLowerCase()}`}>
-    <div className="row">
-      <div><h2 className="big">{readinessZone}</h2><p className="muted">{readiness}/25</p></div>
-      <div className="bubble">{readiness>=18?<CheckCircle2/>:<AlertTriangle/>}</div>
+    <div className="todaySymptomToggleGrid">
+      <button type="button" className={backPain>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("backPain")}><span>Back pain</span><b>{backPain>0?"Yes":"No"}</b></button>
+      <button type="button" className={nerve>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("nerve")}><span>Leg nerve/numbness</span><b>{nerve>0?"Yes":"No"}</b></button>
+      <button type="button" className={anklePain>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("anklePain")}><span>Ankle pain</span><b>{anklePain>0?"Yes":"No"}</b></button>
+      <button type="button" className={ankleStability<=3?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("ankleStability")}><span>Ankle unstable</span><b>{ankleStability<=3?"Yes":"No"}</b></button>
+      <button type="button" className={shoulder>0?"symptomButton active":"symptomButton"} onClick={()=>toggleTodaySymptom("shoulder")}><span>Shoulder sensation</span><b>{shoulder>0?"Yes":"No"}</b></button>
     </div>
-    <div className="meter"><span style={{width:`${(readiness/25)*100}%`}}/></div>
   </div>
 
   <div className="panel cycleTodayCard">
@@ -517,15 +548,25 @@ export default function App(){
     <button type="button" className="pastelLinkBox" onClick={()=>setTab("cycle")}>Open Cycle tab</button>
   </div>
 
+  <div className={`readiness panel ${readinessZone.toLowerCase()}`}>
+    <div className="row">
+      <div><h2 className="big">{readinessZone}</h2><p className="muted">{readiness}/25</p></div>
+      <div className="bubble">{readiness>=18?<CheckCircle2/>:<AlertTriangle/>}</div>
+    </div>
+    <div className="meter"><span style={{width:`${(readiness/25)*100}%`}}/></div>
+  </div>
+
+
+
   <textarea className="notes" placeholder="Notes…" value={notes} onChange={e=>setNotes(e.target.value)}/>
 
   <Button variant="secondary" full busy={busy.save} onClick={()=>saveWorkout(true)}><Save size={16}/> Record the day</Button>
 
   <div className="panel">
-    <div className="sectionTitle"><Dumbbell size={20}/><h2>Workout</h2></div>
+    <div className="sectionTitle"><Dumbbell size={20}/><h2>Let’s begin your workout</h2></div>
     <div className="builderToggle">
       <button className={builderMode==="recommended"?"active":""} onClick={()=>setBuilderMode("recommended")}>Recommended</button>
-      <button className={builderMode==="custom"?"active":""} onClick={buildCustomWorkout}>DIY</button>
+      <button className={builderMode==="custom"?"active":""} onClick={buildCustomWorkout}>Build your own</button>
     </div>
     {builderMode==="recommended"&&<div className="planStack">{Object.entries(recommendedPlans).map(([k,p])=><button key={k} className="plan" onClick={()=>applyRecommendedPlan(k)}><span><b>{p.title}</b><small>{p.focus}</small></span><span>{p.exercises.length}</span></button>)}</div>}
   </div>
@@ -579,11 +620,20 @@ export default function App(){
           </div>
         </div>
       )}
+
+      <div className="previousPeriodBox">
+        <button type="button" className="pastelLinkBox" onClick={()=>setShowPreviousPeriodBox(v=>!v)}>Add previous period dates</button>
+        {showPreviousPeriodBox&&<div className="previousPeriodFields">
+          <label className="field"><span>Start</span><input type="date" value={previousPeriod.start} onChange={e=>setPreviousPeriod({...previousPeriod,start:e.target.value})}/></label>
+          <label className="field"><span>End</span><input type="date" value={previousPeriod.end} onChange={e=>setPreviousPeriod({...previousPeriod,end:e.target.value})}/></label>
+          <Button variant="secondary" full onClick={savePreviousPeriodDates}>Save previous period</Button>
+        </div>}
+      </div>
     </div>
 
     <div className="panel cyclePanel">
       <div className="sectionTitle"><Activity size={20}/><h2>Cycle-aware check-in</h2></div>
-      <label className="field centerField halfWidth"><input type="date" value={cycle.dailyEntryDate} onChange={e=>setCycle({...cycle,dailyEntryDate:e.target.value})}/></label>
+      <div className="cycleCheckDateDisplay">{formatAuLongDate(todayIso())}</div>
       <div className="field flowField"><span>Flow</span><div className="flowBubbleGrid">{["Spotting","Light","Medium","Heavy","Clots"].map(option=><button type="button" key={option} className={(cycle.flowOptions||[]).includes(option)?"flowBubble active":"flowBubble"} onClick={()=>toggleFlow(option)}>{option}</button>)}</div></div>
       <div className="symptomButtonGrid compactSymptoms">
         <button type="button" className={cycle.headacheMigraine>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("headacheMigraine")}><span>Headache / migraine</span><b>{cycle.headacheMigraine>0?"Yes":"No"}</b></button>
