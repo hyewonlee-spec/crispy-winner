@@ -496,3 +496,63 @@
     max-width:170px !important;
   }
 }
+
+
+/* Workout flow UI simplification */
+.plainAddButton{
+  border:0;
+  background:transparent;
+  color:#5b21b6;
+  padding:8px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+}
+.plainAddButton:active{
+  transform:scale(.94);
+  background:#f5f3ff;
+}
+.exerciseCard .exerciseTop h3{
+  margin:0;
+  font-size:clamp(18px,5vw,24px);
+}
+.fullAddSetRow{
+  margin-top:12px;
+}
+.fullAddSetRow .ghost{
+  width:100%;
+  justify-content:center;
+  text-align:center;
+}
+.exerciseCard .setHeader{
+  margin-top:14px;
+}
+
+
+/* Progress report page */
+.progressReportChart h3{
+  margin-bottom:10px;
+  color:#5b21b6;
+}
+.progressLineChart{
+  width:100%;
+  height:170px;
+  color:#5b21b6;
+}
+.gridLine{
+  stroke:rgba(91,33,182,.14);
+  stroke-width:1;
+}
+.gridLine.vertical{
+  stroke:rgba(91,33,182,.09);
+}
+.axisText{
+  fill:var(--muted);
+  font-size:10px;
+  font-weight:800;
+}
+.progressReport .miniOverview p{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
