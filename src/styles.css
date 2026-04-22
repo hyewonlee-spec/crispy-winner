@@ -375,11 +375,23 @@
   margin-bottom:14px;
 }
 
-/* Phase 10.7 Workout flow only */
-.app.activeWorkoutMode{--royal:#ff1493;--royal2:#ff69b4;--lav:#ff1493;--lav2:#ff69b4}
-.app.activeWorkoutMode .primary,.app.activeWorkoutMode .secondary,.app.activeWorkoutMode .bottomNav button.active,.app.activeWorkoutMode .symptomButton.active,.app.activeWorkoutMode .flowBubble.active{background:#ff1493;border-color:#ff1493;color:#fff}
-.app.activeWorkoutMode .panel{border-color:#ffc1df}
-.workoutNameInput{width:100%;border:1px solid var(--line);border-radius:18px;background:#fff;padding:10px 12px;font-weight:900;font-size:clamp(18px,4vw,23px);color:var(--ink)}
-.setHeader.noRpe,.setRow.noRpe{grid-template-columns:34px 1fr 1fr 34px}
-.bottomNav.four{grid-template-columns:repeat(4,1fr)}
-@media(max-width:380px){.setHeader.noRpe,.setRow.noRpe{grid-template-columns:28px 1fr 1fr 28px}}
+/* Phase 10.8 Cycle refinements */
+.yourCyclePhase{text-align:center;align-items:center}
+.yourCyclePhase h3{font-size:clamp(34px,10vw,54px);text-align:center;margin:4px auto 10px;line-height:1.05;color:#5b21b6}
+.yourCyclePhase .trainingBubble{margin-left:auto;margin-right:auto}
+.periodActionButton{width:50%;max-width:220px;margin-top:22px}
+.previousCyclesPanel{position:relative}
+.previousCyclesHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.previousCyclesHeader h2{margin:0}
+.plusCycleButton{width:38px;height:38px;border-radius:999px;border:1px solid #5b21b6;background:#5b21b6;color:#fff;font-size:24px;font-weight:900;line-height:1;display:grid;place-items:center}
+.previousCycleForm{border:1px solid var(--line);background:#fff;border-radius:22px;padding:12px;margin-bottom:14px;display:grid;gap:12px}
+.previousCycleDates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.savePreviousCycleButton{width:70%;max-width:260px}
+.twoLineFlow{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+.twoLineFlow .flowBubble{flex:0 0 calc(33.333% - 8px);max-width:150px;text-align:center;padding:9px 8px}
+.compactSymptoms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.compactSymptoms .symptomButton{min-height:46px;padding:9px 10px;border-radius:16px}
+.compactSymptoms .symptomButton span{font-size:12.5px;line-height:1.15}
+.compactSymptoms .symptomButton b{font-size:11px;padding:5px 8px}
+.saveCheckinButton{width:70%;max-width:320px;margin-top:22px}
+@media(max-width:420px){.periodActionButton{width:60%}.previousCycleDates{gap:8px}.previousCycleDates input{font-size:13px;padding:10px 6px}.twoLineFlow .flowBubble{flex-basis:calc(33.333% - 8px);font-size:12px}.compactSymptoms .symptomButton span{font-size:12px}.saveCheckinButton{width:78%}}

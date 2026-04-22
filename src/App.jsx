@@ -298,7 +298,6 @@ export default function App(){
   useEffect(()=>{localStorage.setItem(STORAGE_KEY,JSON.stringify(draftPayload()))},[date,type,workoutSource,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,workoutExercises]);
   useEffect(()=>{localStorage.setItem(DRAFTS_KEY,JSON.stringify(drafts))},[drafts]);
   useEffect(()=>{if(activeWorkout){localStorage.setItem(ACTIVE_WORKOUT_KEY,JSON.stringify(activeWorkout))}else{localStorage.removeItem(ACTIVE_WORKOUT_KEY)}},[activeWorkout]);
-  useEffect(()=>{if(!activeWorkout && tab==="workout") setTab("today")},[activeWorkout,tab]);
 
   const readiness=useMemo(()=>{let s=25;s-=Math.max(0,7-sleep)*1.4;s-=Math.max(0,7-energy)*1.2;s-=stress*.7;s-=backPain*1.2;s-=nerve*1.8;s-=anklePain*1.3;s-=Math.max(0,7-ankleStability)*1.1;s-=shoulder*1.1;return Math.round(Math.max(0,Math.min(25,s)))},[sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder]);
   const readinessZone=readiness>=18?"Green":readiness>=12?"Amber":"Red";
@@ -365,7 +364,7 @@ export default function App(){
   }
   function addExercise(ex,source="Added"){if(workoutSource==="Recommended")setWorkoutSource("Modified Recommended");const next=makeExercise(ex,source);setWorkoutExercises(prev=>[...prev,next]);setTab("workout");show(`${ex.exercise} added.`,"success");setTimeout(()=>hydratePrevious(next),100)}
   function applyRecommendedPlan(key){setStartPrompt(key)}
-  function buildCustomWorkout(){setCustomWorkoutPrompt(true)}
+  function buildCustomWorkout(){setBuilderMode("custom");setCustomWorkoutPrompt(true)}
   async function startCustomWorkout(){
     setCustomWorkoutPrompt(false);
     setBuilderMode("custom");
@@ -407,7 +406,7 @@ export default function App(){
           ...c,
           periodStartDate:latest.periodStartDate||c.periodStartDate,
           periodEndDate:latest.periodEndDate||c.periodEndDate,
-          flowOptions:Array.isArray(latest.bleedingFlow)?latest.bleedingFlow:(latest.bleedingFlow?String(latest.bleedingFlow).split(",").map(x=>x.trim()).filter(Boolean):c.flowOptions),
+          bleedingFlow:Array.isArray(latest.bleedingFlow)?latest.bleedingFlow:(latest.bleedingFlow?String(latest.bleedingFlow).split(",").map(x=>x.trim()).filter(Boolean):c.bleedingFlow),
           cramps:latest.cramps??c.cramps,
           
           sleepDisruption:latest.sleepDisruption??c.sleepDisruption,
@@ -446,7 +445,7 @@ export default function App(){
   function confirmPeriodDate(){
     if(!pendingPeriodDate) return show("Choose a date first.","error");
     if(periodDateMode==="start"){
-      setCycle(c=>({...c,periodStartDate:pendingPeriodDate,periodEndDate:"",dailyEntryDate:pendingPeriodDate,flowOptions:c.flowOptions||[]}));
+      setCycle(c=>({...c,periodStartDate:pendingPeriodDate,periodEndDate:"",dailyEntryDate:pendingPeriodDate,bleedingFlow:Array.isArray(c.bleedingFlow)?c.bleedingFlow:[]}));
       show(`Period start saved: ${pendingPeriodDate}`,"success");
     }
     if(periodDateMode==="end"){
@@ -459,7 +458,7 @@ export default function App(){
   function markPeriodStarted(useToday=true){
     const chosen = useToday ? todayIso() : cycle.periodStartDate;
     if(!chosen) return show("Choose a period start date first.","error");
-    setCycle(c=>({...c,periodStartDate:chosen,dailyEntryDate:c.dailyEntryDate||chosen,flowOptions:c.flowOptions||[]}));
+    setCycle(c=>({...c,periodStartDate:chosen,dailyEntryDate:c.dailyEntryDate||chosen,bleedingFlow:Array.isArray(c.bleedingFlow)?c.bleedingFlow:[]}));
     show(`Period start marked: ${chosen}`,"success");
   }
 
@@ -482,7 +481,6 @@ export default function App(){
       cycleDay:null,
       cyclePhase:"",
       trainingRecommendation:"Normal training",
-      bleedingFlow:[],
       bleedingFlow:[]
     };
     try{
@@ -491,7 +489,7 @@ export default function App(){
       if(!r.ok)throw new Error(j.error||"Previous period save failed");
       setShowPreviousPeriodBox(false); setPreviousPeriod({start:"",end:""});
       await loadCycleLogs(false);
-      show("Previous period dates saved.","success");
+      show("Cycle saved.","success");
     }catch(e){show(`Previous period save failed: ${e.message}`,"error")}
   }
 
@@ -603,21 +601,23 @@ export default function App(){
     {tab==="progress"&&<section className="stack"><div className="panel"><div className="sectionTitle"><BarChart3 size={20}/><h2>Progress Dashboard</h2></div><Button variant="secondary" full busy={busy.history} onClick={()=>loadHistory(true)}>Refresh progress</Button>{history.error&&<p className="errorText">{history.error}</p>}</div><div className="statsGrid"><Stat label="Total logs" value={history.summary?.totalLogs}/><Stat label="Workouts" value={history.summary?.workouts}/><Stat label="Avg readiness" value={history.summary?.avgReadiness}/><Stat label="Avg sleep" value={history.summary?.avgSleep}/><Stat label="Avg ankle pain" value={history.summary?.avgAnklePain}/><Stat label="Avg back pain" value={history.summary?.avgBackPain}/></div><WeeklyMonthlyOverview sessions={history.sessions}/><MiniChart title="Readiness trend" data={history.sessions} keyName="readiness" max={25}/><MiniChart title="Ankle pain trend" data={history.sessions} keyName="anklePain" max={10}/><div className="panel"><h2>Recent sessions</h2><div className="sessionList">{history.sessions.slice(0,12).map(s=><div className="sessionItem" key={s.id}><div className="row"><b>{s.date||"No date"}</b><span className="pill">{s.readiness??"—"}/25</span></div><p className="muted">{s.type||"Log"} · Back {s.backPain??"—"} · Nerve {s.nerveSymptoms??"—"} · Ankle {s.anklePain??"—"} · Shoulder {s.shoulder??"—"}</p>{s.notes&&<p className="note">{s.notes}</p>}</div>)}</div></div></section>}
     {tab==="exerciseHistory"&&<section className="stack"><div className="panel"><div className="sectionTitle"><History size={20}/><h2>{selectedHistoryExercise?.exercise||"Exercise"} History</h2></div><Button variant="secondary" full onClick={()=>setTab("library")}>Back to library</Button></div>{busy.exerciseHistory&&<div className="panel"><Spinner on/> Loading history…</div>}{exerciseHistory&&<><div className="statsGrid"><Stat label="Entries" value={exerciseHistory.summary?.entries}/><Stat label="Sets" value={exerciseHistory.summary?.totalSets}/><Stat label="Best weight" value={exerciseHistory.summary?.bestSet?.weight}/><Stat label="Best reps" value={exerciseHistory.summary?.bestSet?.reps}/></div><div className="panel"><h2>Past sets</h2><div className="sessionList">{exerciseHistory.sets.map(s=><div className="sessionItem" key={s.id}><div className="row"><b>{s.setEntry}</b><span className="pill">{s.weight??"—"}{s.weightUnit||"kg"} × {s.reps??"—"}</span></div><p className="muted">RPE {s.rpe??"—"} · {s.workoutExerciseName}</p></div>)}</div></div></>}</section>}
     {trackCycle==="yes"&&tab==="cycle"&&<section className="stack">
-  <div className="panel cycleTodayCard">
+  <div className="panel cycleTodayCard yourCycleCard">
     <div className="sectionTitle"><Sparkles size={20}/><h2>Your cycle</h2></div>
-    <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
+    <div className={"cyclePhase compact yourCyclePhase "+((currentCycle.phase||"").toLowerCase().replaceAll(" ","-"))}>
       <h3>{currentCycle.phase}</h3>
       <div className="cycleHeroGrid todayCycleGrid">
         <div className="nextPeriodBox"><span>Next period is due</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} days</b></div>
       </div>
       <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
     </div>
-    <div className="centerControl wide80">
-      <Button variant="primary" full onClick={()=>openPeriodDateBox("start")}>Period started</Button>
+    <div className="centerControl periodActionButton">
+      {!cycle.periodStartDate || cycle.periodEndDate
+        ? <Button variant="primary" full onClick={()=>openPeriodDateBox("start")}>Period started</Button>
+        : <Button variant="primary" full onClick={()=>openPeriodDateBox("end")}>Period ended</Button>}
     </div>
-    {periodDateMode==="start"&&(
+    {periodDateMode&&(
       <div className="periodDatePopup">
-        <h3>Confirm period start date</h3>
+        <h3>{periodDateMode==="start" ? "Confirm period start date" : "Confirm period end date"}</h3>
         <input type="date" value={pendingPeriodDate} onChange={e=>setPendingPeriodDate(e.target.value)}/>
         <div className="periodPopupActions">
           <button type="button" className="ghost smallButton" onClick={()=>setPeriodDateMode(null)}>Cancel</button>
@@ -627,11 +627,12 @@ export default function App(){
     )}
   </div>
 
-  <div className="panel">
-    <h2>Previous cycles</h2>
+  <div className="panel previousCyclesPanel">
+    <div className="previousCyclesHeader"><h2>Previous cycles</h2><button type="button" className="plusCycleButton" onClick={()=>setShowPreviousPeriodBox(v=>!v)}>+</button></div>
+    {showPreviousPeriodBox&&<div className="previousCycleForm"><div className="previousCycleDates"><label className="field"><span>Start date</span><input type="date" value={previousPeriod.start} onChange={e=>setPreviousPeriod({...previousPeriod,start:e.target.value})}/></label><label className="field"><span>End date</span><input type="date" value={previousPeriod.end} onChange={e=>setPreviousPeriod({...previousPeriod,end:e.target.value})}/></label></div><div className="centerControl savePreviousCycleButton"><Button variant="primary" full onClick={savePreviousPeriodDates}>Save cycle</Button></div></div>}
     <div className="sessionList">
       {cycleLogs.filter(log=>log.periodStartDate).length===0&&<div className="emptyMini">No previous cycles yet.</div>}
-      {cycleLogs.filter(log=>log.periodStartDate).slice(0,8).map(log=>
+      {cycleLogs.filter(log=>log.periodStartDate).slice(0,4).map(log=>
         <div className="sessionItem" key={log.id}>
           <div className="row">
             <b>{formatAuDate(log.periodStartDate)} – {formatAuDate(log.periodEndDate)}</b>
@@ -648,7 +649,7 @@ export default function App(){
     <div className="centeredDatePlain">{formatAuDate(todayIso())}</div>
 
     <label className="field"><span>Flow</span>
-      <div className="flowBubbleGrid">
+      <div className="flowBubbleGrid twoLineFlow">
         {["Spotting","Light","Medium","Heavy","Clots"].map(option=>
           <button
             type="button"
@@ -662,7 +663,7 @@ export default function App(){
       </div>
     </label>
 
-    <div className="symptomButtonGrid">
+    <div className="symptomButtonGrid compactSymptoms">
       <button type="button" className={cycle.headacheMigraine>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("headacheMigraine")}><span>Headache / migraine</span><b>{cycle.headacheMigraine>0?"Yes":"No"}</b></button>
       <button type="button" className={cycle.saltCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("saltCravings")}><span>Salt cravings</span><b>{cycle.saltCravings>0?"Yes":"No"}</b></button>
       <button type="button" className={cycle.sugarCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sugarCravings")}><span>Sugar cravings</span><b>{cycle.sugarCravings>0?"Yes":"No"}</b></button>
@@ -679,10 +680,10 @@ export default function App(){
     </div>
 
     <textarea className="notes small" placeholder="Daily cycle notes…" value={cycle.notes} onChange={e=>setCycle({...cycle,notes:e.target.value})}/>
-    <div className="centerControl wide80"><Button variant="primary" full onClick={saveCycleCheck}>Save today’s check-in</Button></div>
+    <div className="centerControl saveCheckinButton"><Button variant="primary" full onClick={saveCycleCheck}>Save today’s check-in</Button></div>
     {cycleStatus&&<p className="errorText">{cycleStatus}</p>}
   </div>
 </section>}{tab==="rules"&&<section className="stack"><div className="panel"><div className="sectionTitle"><Activity size={20}/><h2>Check</h2></div></div>
     {trackCycle==="yes"&&<div className="panel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><Button variant="secondary" full onClick={()=>setTab("cycle")}>Open Cycle tab</Button></div>}<div className="checkGrid"><div className="panel checkCard"><div className="sectionTitle"><Soup size={20}/><h3>Food choice</h3></div><ul><li>Protein at each meal when possible.</li><li>Pair carbs with protein around training for energy and recovery.</li><li>Hydrate before gym; add electrolytes if walking/training in heat.</li><li>Keep a quick fallback meal ready so fatigue does not become snack-chaos goblin time.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><Moon size={20}/><h3>Sleep hygiene</h3></div><ul><li>Same wake time most days.</li><li>Dim screens/bright lights in the final 30–60 minutes.</li><li>Avoid caffeine late afternoon/evening.</li><li>Keep the room cool, dark and boring in the best way.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><StretchHorizontal size={20}/><h3>Mobility / stretching</h3></div><ul><li>Before training: gentle dynamic warm-up, not aggressive stretching.</li><li>For ankle: controlled band work and balance before lower-body sessions.</li><li>For back: bird dog/dead bug style activation beats heavy flexion.</li><li>After training: relaxed stretching and breathing to downshift.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><AlertTriangle size={20}/><h3>Modify today if…</h3></div><ul><li>Nerve symptoms are up from baseline.</li><li>Left ankle feels unstable before warm-up.</li><li>Shoulder feels odd during the first warm-up sets.</li><li>Sleep/energy are poor: reduce load 10–20%.</li></ul></div></div><div className="panel"><h2>Menstruation tracking setting</h2><div className="twoCol"><Button variant={trackCycle==="yes"?"primary":"secondary"} onClick={()=>changeCycleTracking("yes")}>Track menstruation</Button><Button variant={trackCycle==="no"?"primary":"secondary"} onClick={()=>changeCycleTracking("no")}>Hide cycle tracking</Button></div></div><div className="panel"><h2>API checks</h2><p className="muted"><code>/api/health</code>, <code>/api/exercises</code>, <code>/api/history</code>, <code>/api/exercise-history?exerciseId=...</code></p></div></section>}
-  </main><nav className={`bottomNav ${activeWorkout&&trackCycle==="yes" ? "six" : activeWorkout||trackCycle==="yes" ? "five" : "four"}`}><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button>{activeWorkout&&<button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button>}<button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button>{trackCycle==="yes"&&<button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button>}<button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
+  </main><nav className={`bottomNav ${activeWorkout && trackCycle==="yes" ? "six" : "five"}`}><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button>{activeWorkout&&<button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button>}<button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button>{trackCycle==="yes"&&<button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button>}<button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
 }
