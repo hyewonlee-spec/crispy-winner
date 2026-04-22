@@ -570,16 +570,12 @@ export default function App(){
   </div>
 
   {trackCycle==="yes"&&<button type="button" className="panel cycleTodayCard cycleTodayButton" onClick={()=>setTab("cycle")}>
-  <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
-  <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
-    <h3>{currentCycle.phase}</h3>
-    <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
-  </div>
-</button>}}
-<div className="bubble">{readiness>=18?<CheckCircle2/>:<AlertTriangle/>}</div>
+    <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
+    <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
+      <h3>{currentCycle.phase}</h3>
+      <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
     </div>
-    <div className="meter"><span style={{width:`${(readiness/30)*100}%`}}/></div>
-  </div>
+  </button>}
 
 
 
