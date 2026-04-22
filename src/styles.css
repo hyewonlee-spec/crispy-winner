@@ -330,3 +330,6 @@
 .flowBubbleGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
 .flowBubble{border:1px solid var(--line);border-radius:999px;background:#fff;padding:10px 12px;font-weight:900;color:var(--ink)}
 .dangerLink{color:#be123c;font-weight:900}
+
+/* Phase 10.5 Today clean-up */
+.dashboardToday .notes{margin-top:0}
