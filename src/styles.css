@@ -374,3 +374,12 @@
   font-size:clamp(18px,5vw,24px);
   margin-bottom:14px;
 }
+
+/* Phase 10.7 Workout flow only */
+.app.activeWorkoutMode{--royal:#ff1493;--royal2:#ff69b4;--lav:#ff1493;--lav2:#ff69b4}
+.app.activeWorkoutMode .primary,.app.activeWorkoutMode .secondary,.app.activeWorkoutMode .bottomNav button.active,.app.activeWorkoutMode .symptomButton.active,.app.activeWorkoutMode .flowBubble.active{background:#ff1493;border-color:#ff1493;color:#fff}
+.app.activeWorkoutMode .panel{border-color:#ffc1df}
+.workoutNameInput{width:100%;border:1px solid var(--line);border-radius:18px;background:#fff;padding:10px 12px;font-weight:900;font-size:clamp(18px,4vw,23px);color:var(--ink)}
+.setHeader.noRpe,.setRow.noRpe{grid-template-columns:34px 1fr 1fr 34px}
+.bottomNav.four{grid-template-columns:repeat(4,1fr)}
+@media(max-width:380px){.setHeader.noRpe,.setRow.noRpe{grid-template-columns:28px 1fr 1fr 28px}}
