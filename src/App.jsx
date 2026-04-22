@@ -4,6 +4,7 @@ import { Activity, AlertTriangle, BarChart3, CalendarDays, CalendarPlus, CheckCi
 const STORAGE_KEY = "rehab_strength_tracker_v2_phase4_draft";
 const DRAFTS_KEY = "rehab_strength_tracker_v2_phase4_drafts";
 const ACTIVE_WORKOUT_KEY = "rehab_strength_tracker_v2_phase9_active_workout";
+const TRACK_CYCLE_KEY = "muscle_royalty_track_cycle";
 
 const recommendedPlans = {
   1: { title: "Lower A", type: "Lower A", focus: "Glutes, hamstrings, spine-safe strength", exercises: ["Hip Thrust", "Dumbbell Romanian Deadlift", "Seated Hamstring Curl", "Leg Press", "Hip Abductor Machine", "Hip Adductor Machine", "Pallof Press", "Seated Heel Raise Partial Range"] },
@@ -248,6 +249,7 @@ export default function App(){
   const [drafts,setDrafts]=useState([]);
   const [toast,setToast]=useState({message:"",kind:"info"});
   const [busy,setBusy]=useState({library:false,save:false,custom:false,history:false,exerciseHistory:false,template:false});
+  const [trackCycle,setTrackCycle]=useState(()=>localStorage.getItem(TRACK_CYCLE_KEY));
   const [query,setQuery]=useState(""); const [categoryFilter,setCategoryFilter]=useState("All"); const [statusFilter,setStatusFilter]=useState("All");
   const [builderMode,setBuilderMode]=useState("recommended");
   const [startPrompt,setStartPrompt]=useState(null);
@@ -260,7 +262,7 @@ export default function App(){
   const [sleep,setSleep]=useState(6),[energy,setEnergy]=useState(6),[stress,setStress]=useState(4),[backPain,setBackPain]=useState(0),[nerve,setNerve]=useState(0),[anklePain,setAnklePain]=useState(0),[ankleStability,setAnkleStability]=useState(5),[shoulder,setShoulder]=useState(0),[dogWalk,setDogWalk]=useState(30);
   const [notes,setNotes]=useState(""); const [workoutExercises,setWorkoutExercises]=useState([]);
   const [custom,setCustom]=useState({exercise:"",category:"Custom",equipment:"",movementPattern:"Custom",primaryMuscles:"",status:"Custom",riskFlags:"",defaultSets:3,defaultReps:"10",coachNote:""});
-  const [cycle,setCycle]=useState({date:todayIso(),dailyEntryDate:todayIso(),periodStartDate:"",periodEndDate:"",flowOptions:[],cramps:0,sleepDisruption:0,moodSwings:0,fatigue:0,headacheMigraine:0,saltCravings:0,sugarCravings:0,indigestion:0,bloating:0,constipation:0,tenderBreasts:0,acne:0,dizziness:0,notes:""});
+  const [cycle,setCycle]=useState({date:todayIso(),dailyEntryDate:todayIso(),periodStartDate:"",periodEndDate:"",bleedingFlow:[],cramps:0,sleepDisruption:0,moodSwings:0,fatigue:0,headacheMigraine:0,saltCravings:0,sugarCravings:0,indigestion:0,bloating:0,constipation:0,tenderBreasts:0,acne:0,dizziness:0,notes:""});
   const [periodDateMode,setPeriodDateMode]=useState(null);
   const [pendingPeriodDate,setPendingPeriodDate]=useState(todayIso());
   const [showPreviousPeriodBox,setShowPreviousPeriodBox]=useState(false);
@@ -269,6 +271,19 @@ export default function App(){
   const [cycleStatus,setCycleStatus]=useState("");
 
   function show(message,kind="info"){setToast({message,kind});setTimeout(()=>setToast(t=>t.message===message?{message:"",kind:"info"}:t),3500)}
+  function chooseCycleTracking(choice){
+    localStorage.setItem(TRACK_CYCLE_KEY,choice);
+    setTrackCycle(choice);
+    if(choice==="yes") loadCycleLogs(false);
+    show(choice==="yes" ? "Cycle tracking enabled." : "Cycle tracking hidden.","success");
+  }
+  function changeCycleTracking(choice){
+    localStorage.setItem(TRACK_CYCLE_KEY,choice);
+    setTrackCycle(choice);
+    if(choice==="yes") loadCycleLogs(false);
+    if(choice==="no" && tab==="cycle") setTab("today");
+    show(choice==="yes" ? "Cycle tracking enabled." : "Cycle tracking hidden.","success");
+  }
   function toggleSymptom(key){setCycle(c=>({...c,[key]:Number(c[key]||0)>0?0:6}))}
   function toggleTodaySymptom(key){
     if(key==="ankleStability"){ setAnkleStability(v=>v<=3?7:3); return; }
@@ -278,7 +293,7 @@ export default function App(){
   }
   function toggleFlow(option){
     setCycle(c=>{
-      const current=Array.isArray(c.flowOptions)?c.flowOptions:[].concat(c.bleedingFlow||[]).filter(Boolean);
+      const current=Array.isArray(c.flowOptions)?c.bleedingFlow:[].concat(c.bleedingFlow||[]).filter(Boolean);
       const exists=current.includes(option);
       const next=exists?current.filter(item=>item!==option):[...current, option].slice(-2);
       return {...c,flowOptions:next,bleedingFlow:next.join(", ")};
@@ -287,10 +302,11 @@ export default function App(){
   function draftPayload(){return{date,type,workoutSource,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,exercises:workoutExercises}}
   function applyDraft(d){setDate(d.date||todayIso());setType(d.type||"Custom Workout");setWorkoutSource(d.workoutSource||"Custom");setSleep(d.sleep??6);setEnergy(d.energy??6);setStress(d.stress??4);setBackPain(d.backPain??0);setNerve(d.nerve??0);setAnklePain(d.anklePain??0);setAnkleStability(d.ankleStability??5);setShoulder(d.shoulder??0);setDogWalk(d.dogWalk??30);setNotes(d.notes||"");setWorkoutExercises(d.exercises||[]);}
 
-  useEffect(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)applyDraft(JSON.parse(raw));const ds=localStorage.getItem(DRAFTS_KEY);if(ds)setDrafts(JSON.parse(ds));const aw=localStorage.getItem(ACTIVE_WORKOUT_KEY);if(aw)setActiveWorkout(JSON.parse(aw))}catch{} loadExercises(false); loadHistory(false); loadTemplates(false); loadCycleLogs(false)},[]);
+  useEffect(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)applyDraft(JSON.parse(raw));const ds=localStorage.getItem(DRAFTS_KEY);if(ds)setDrafts(JSON.parse(ds));const aw=localStorage.getItem(ACTIVE_WORKOUT_KEY);if(aw)setActiveWorkout(JSON.parse(aw))}catch{} loadExercises(false); loadHistory(false); loadTemplates(false); if(localStorage.getItem(TRACK_CYCLE_KEY)==="yes") loadCycleLogs(false)},[]);
   useEffect(()=>{localStorage.setItem(STORAGE_KEY,JSON.stringify(draftPayload()))},[date,type,workoutSource,sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder,dogWalk,notes,workoutExercises]);
   useEffect(()=>{localStorage.setItem(DRAFTS_KEY,JSON.stringify(drafts))},[drafts]);
   useEffect(()=>{if(activeWorkout){localStorage.setItem(ACTIVE_WORKOUT_KEY,JSON.stringify(activeWorkout))}else{localStorage.removeItem(ACTIVE_WORKOUT_KEY)}},[activeWorkout]);
+  useEffect(()=>{if(trackCycle==="no" && tab==="cycle") setTab("today")},[trackCycle,tab]);
 
   const readiness=useMemo(()=>{let s=25;s-=Math.max(0,7-sleep)*1.4;s-=Math.max(0,7-energy)*1.2;s-=stress*.7;s-=backPain*1.2;s-=nerve*1.8;s-=anklePain*1.3;s-=Math.max(0,7-ankleStability)*1.1;s-=shoulder*1.1;return Math.round(Math.max(0,Math.min(25,s)))},[sleep,energy,stress,backPain,nerve,anklePain,ankleStability,shoulder]);
   const readinessZone=readiness>=18?"Green":readiness>=12?"Amber":"Red";
@@ -430,7 +446,7 @@ export default function App(){
   }
 
   function resetPeriodFlow(){
-    setCycle(c=>({...c,periodStartDate:"",periodEndDate:"",flowOptions:[]}));
+    setCycle(c=>({...c,periodStartDate:"",periodEndDate:"",bleedingFlow:[]}));
     setPeriodDateMode(null);
     show("Period flow reset.","success");
   }
@@ -474,8 +490,8 @@ export default function App(){
       cycleDay:null,
       cyclePhase:"",
       trainingRecommendation:"Normal training",
-      flowOptions:[],
-      bleedingFlow:""
+      bleedingFlow:[],
+      bleedingFlow:[]
     };
     try{
       const r=await fetch("/api/cycle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
@@ -545,6 +561,7 @@ export default function App(){
   async function showExerciseHistory(ex){setSelectedHistoryExercise(ex);setTab("exerciseHistory");setBusy(b=>({...b,exerciseHistory:true}));try{const r=await fetch(`/api/exercise-history?exerciseId=${ex.id}`);const j=await r.json();if(!r.ok)throw new Error(j.error||"History failed");setExerciseHistory(j)}catch(e){show(`History failed: ${e.message}`,"error")}finally{setBusy(b=>({...b,exerciseHistory:false}))}}
 
   return <div className={`app ${activeWorkout ? "activeWorkoutMode" : ""}`}><Toast toast={toast} onClose={()=>setToast({message:"",kind:"info"})}/>
+      {trackCycle===null&&<div className="modalShade"><div className="modalBox menstruationChoiceModal"><h2>Do you want to track menstruation?</h2><div className="twoCol"><Button variant="secondary" onClick={()=>chooseCycleTracking("no")}>No</Button><Button variant="primary" onClick={()=>chooseCycleTracking("yes")}>Yes</Button></div></div></div>}
       {startPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you ready to begin your workout?</h2><p>{recommendedPlans[startPrompt]?.title}</p><div className="twoCol"><Button variant="secondary" onClick={()=>setStartPrompt(null)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={()=>startWorkoutFromPlan(startPrompt)}>Yes</Button></div></div></div>}
       {customWorkoutPrompt&&<div className="modalShade"><div className="modalBox"><h2>Are you ready to begin your workout?</h2><p>Build your own workout</p><div className="twoCol"><Button variant="secondary" onClick={()=>setCustomWorkoutPrompt(false)}>Not yet</Button><Button variant="primary" busy={busy.save} onClick={startCustomWorkout}>Yes</Button></div></div></div>}
       {workoutChooserPrompt&&<div className="modalShade"><div className="modalBox workoutChooserModal"><h2>Let’s begin your workout</h2><div className="chooserActions"><Button variant="secondary" full onClick={()=>{setWorkoutChooserPrompt(false);buildCustomWorkout()}}>Build your own</Button></div><div className="chooserPlanList">{Object.entries(recommendedPlans).map(([k,p])=><button key={k} className="plan" onClick={()=>{setWorkoutChooserPrompt(false);setStartPrompt(k)}}><span><b>{p.title}</b><small>{p.focus}</small></span><span>{p.exercises.length}</span></button>)}</div><Button variant="ghost" full onClick={()=>{setWorkoutChooserPrompt(false);setDayRecordedToday(true)}}>Not yet</Button></div></div>}
@@ -561,7 +578,7 @@ export default function App(){
     </div>
   </div>
 
-  <div className="panel cycleTodayCard">
+  {trackCycle==="yes"&&<div className="panel cycleTodayCard">
     <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
     <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
       <h3 className="phaseLarge">{currentCycle.phase}</h3>
@@ -571,7 +588,7 @@ export default function App(){
       <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
     </div>
     <button type="button" className="pastelLinkBox" onClick={()=>setTab("cycle")}>Open Cycle tab</button>
-  </div>
+  </div>}
 
   <div className={`readiness panel ${readinessZone.toLowerCase()}`}>
     <div className="row">
@@ -647,6 +664,6 @@ export default function App(){
     {cycleStatus&&<p className="errorText">{cycleStatus}</p>}
   </div>
 </section>}{tab==="rules"&&<section className="stack"><div className="panel"><div className="sectionTitle"><Activity size={20}/><h2>Check</h2></div></div>
-    <div className="panel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><Button variant="secondary" full onClick={()=>setTab("cycle")}>Open Cycle tab</Button></div><div className="checkGrid"><div className="panel checkCard"><div className="sectionTitle"><Soup size={20}/><h3>Food choice</h3></div><ul><li>Protein at each meal when possible.</li><li>Pair carbs with protein around training for energy and recovery.</li><li>Hydrate before gym; add electrolytes if walking/training in heat.</li><li>Keep a quick fallback meal ready so fatigue does not become snack-chaos goblin time.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><Moon size={20}/><h3>Sleep hygiene</h3></div><ul><li>Same wake time most days.</li><li>Dim screens/bright lights in the final 30–60 minutes.</li><li>Avoid caffeine late afternoon/evening.</li><li>Keep the room cool, dark and boring in the best way.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><StretchHorizontal size={20}/><h3>Mobility / stretching</h3></div><ul><li>Before training: gentle dynamic warm-up, not aggressive stretching.</li><li>For ankle: controlled band work and balance before lower-body sessions.</li><li>For back: bird dog/dead bug style activation beats heavy flexion.</li><li>After training: relaxed stretching and breathing to downshift.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><AlertTriangle size={20}/><h3>Modify today if…</h3></div><ul><li>Nerve symptoms are up from baseline.</li><li>Left ankle feels unstable before warm-up.</li><li>Shoulder feels odd during the first warm-up sets.</li><li>Sleep/energy are poor: reduce load 10–20%.</li></ul></div></div><div className="panel"><h2>API checks</h2><p className="muted"><code>/api/health</code>, <code>/api/exercises</code>, <code>/api/history</code>, <code>/api/exercise-history?exerciseId=...</code></p></div></section>}
-  </main><nav className={`bottomNav ${activeWorkout ? "six" : "five"}`}><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button>{activeWorkout&&<button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button>}<button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button><button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button><button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
+    {trackCycle==="yes"&&<div className="panel"><div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div><Button variant="secondary" full onClick={()=>setTab("cycle")}>Open Cycle tab</Button></div>}<div className="checkGrid"><div className="panel checkCard"><div className="sectionTitle"><Soup size={20}/><h3>Food choice</h3></div><ul><li>Protein at each meal when possible.</li><li>Pair carbs with protein around training for energy and recovery.</li><li>Hydrate before gym; add electrolytes if walking/training in heat.</li><li>Keep a quick fallback meal ready so fatigue does not become snack-chaos goblin time.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><Moon size={20}/><h3>Sleep hygiene</h3></div><ul><li>Same wake time most days.</li><li>Dim screens/bright lights in the final 30–60 minutes.</li><li>Avoid caffeine late afternoon/evening.</li><li>Keep the room cool, dark and boring in the best way.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><StretchHorizontal size={20}/><h3>Mobility / stretching</h3></div><ul><li>Before training: gentle dynamic warm-up, not aggressive stretching.</li><li>For ankle: controlled band work and balance before lower-body sessions.</li><li>For back: bird dog/dead bug style activation beats heavy flexion.</li><li>After training: relaxed stretching and breathing to downshift.</li></ul></div><div className="panel checkCard"><div className="sectionTitle"><AlertTriangle size={20}/><h3>Modify today if…</h3></div><ul><li>Nerve symptoms are up from baseline.</li><li>Left ankle feels unstable before warm-up.</li><li>Shoulder feels odd during the first warm-up sets.</li><li>Sleep/energy are poor: reduce load 10–20%.</li></ul></div></div><div className="panel"><h2>Menstruation tracking setting</h2><div className="twoCol"><Button variant={trackCycle==="yes"?"primary":"secondary"} onClick={()=>changeCycleTracking("yes")}>Track menstruation</Button><Button variant={trackCycle==="no"?"primary":"secondary"} onClick={()=>changeCycleTracking("no")}>Hide cycle tracking</Button></div></div><div className="panel"><h2>API checks</h2><p className="muted"><code>/api/health</code>, <code>/api/exercises</code>, <code>/api/history</code>, <code>/api/exercise-history?exerciseId=...</code></p></div></section>}
+  </main><nav className={`bottomNav ${activeWorkout && trackCycle==="yes" ? "six" : "five"}`}><button className={tab==="today"?"active":""} onClick={()=>setTab("today")}>Today</button>{activeWorkout&&<button className={tab==="workout"?"active":""} onClick={()=>setTab("workout")}>Workout</button>}<button className={tab==="library"||tab==="exerciseHistory"?"active":""} onClick={()=>setTab("library")}>Library</button><button className={tab==="progress"?"active":""} onClick={()=>setTab("progress")}>Progress</button>{trackCycle==="yes"&&<button className={tab==="cycle"?"active":""} onClick={()=>setTab("cycle")}>Cycle</button>}<button className={tab==="rules"?"active":""} onClick={()=>setTab("rules")}>Check</button></nav></div>
 }

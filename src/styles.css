@@ -360,3 +360,9 @@
 @media(max-width:430px){
   .flowBubbleGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Phase 10.4 fixed: menstruation tracking choice */
+.menstruationChoiceModal{
+  gap:18px;
+}
+.bottomNav.five{grid-template-columns:repeat(5,1fr)}
