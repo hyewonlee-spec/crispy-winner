@@ -572,16 +572,41 @@
 }
 
 
-/* Workout page cleanup */
+/* Workout page patch 2 */
+.workoutHeader{
+  align-items:center;
+}
+.workoutHeader > div{
+  width:100%;
+}
 .workoutDisplayTitle{
   margin:0;
   font-size:clamp(20px,5.8vw,28px);
   font-weight:900;
   color:var(--ink);
 }
-.exerciseCard .exerciseTop h3{
-  font-size:clamp(15px,4.2vw,19px);
+.customWorkoutNameInput{
+  width:100%;
+}
+.exerciseCard .exerciseTop.noToggle{
+  grid-template-columns:1fr auto;
+  align-items:center;
+}
+.exerciseCard .exerciseTop.noToggle h3{
+  font-size:clamp(14px,3.8vw,18px);
   line-height:1.15;
+  margin:0;
+}
+.exerciseCard .collapseBtn{
+  display:none !important;
+}
+.fullAddSetRow{
+  margin-top:12px;
+}
+.fullAddSetRow .ghost{
+  width:100%;
+  justify-content:center;
+  text-align:center;
 }
 .workoutBottomAddExercise{
   margin-top:8px;
