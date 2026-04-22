@@ -15,9 +15,9 @@ function requireTemplateEnv() {
 function mapTemplate(page) {
   return {
     id: page.id,
-    name: getTitle(page, "Template"),
-    type: getSelect(page, "Type"),
-    focus: getRichText(page, "Focus"),
+    name: getTitle(page, "Template Name"),
+    type: getSelect(page, "Template Type"),
+    focus: getRichText(page, "Notes"),
     active: page.properties?.["Active"]?.checkbox ?? true,
   };
 }
@@ -29,9 +29,9 @@ function mapTemplateExercise(page) {
     order: getNumber(page, "Order"),
     targetSets: getNumber(page, "Target Sets"),
     targetReps: getRichText(page, "Target Reps"),
-    notes: getRichText(page, "Notes"),
-    templateIds: getRelation(page, "Template Link"),
-    exerciseIds: getRelation(page, "Exercise Link"),
+    notes: getRichText(page, "Exercise Notes"),
+    templateIds: getRelation(page, "Workout Template"),
+    exerciseIds: getRelation(page, "Exercise"),
   };
 }
 
@@ -39,7 +39,7 @@ async function listTemplates() {
   requireTemplateEnv();
   const templatesResp = await notionRequest(`/databases/${env.workoutTemplatesDb}/query`, {
     method: "POST",
-    body: JSON.stringify({ page_size: 50, sorts: [{ property: "Template", direction: "ascending" }] }),
+    body: JSON.stringify({ page_size: 50, sorts: [{ property: "Sort Order", direction: "ascending" }] }),
   });
   const templates = templatesResp.results.map(mapTemplate);
 
@@ -63,9 +63,9 @@ async function createTemplate(body) {
     body: JSON.stringify({
       parent: { database_id: env.workoutTemplatesDb },
       properties: {
-        "Template": { title: titleText(name) },
-        "Type": { select: { name: body.type || "Custom Workout" } },
-        "Focus": { rich_text: richText(body.focus || "") },
+        "Template Name": { title: titleText(name) },
+        "Template Type": { select: { name: body.type || "Custom" } },
+        "Notes": { rich_text: richText(body.focus || "") },
         "Active": { checkbox: true },
       },
     }),
@@ -74,19 +74,25 @@ async function createTemplate(body) {
   let count = 0;
   for (let i = 0; i < (body.exercises || []).length; i++) {
     const ex = body.exercises[i];
+    const exerciseRelationId = ex.exerciseId || ex.id;
+    const properties = {
+      "Template Exercise": { title: titleText(`${name} · ${ex.name || ex.exercise || "Exercise"}`) },
+      "Workout Template": { relation: relation(template.id) },
+      "Order": { number: i + 1 },
+      "Target Sets": { number: numberOrNull(ex.targetSets) },
+      "Target Reps": { rich_text: richText(ex.targetReps || "") },
+      "Exercise Notes": { rich_text: richText(ex.notes || "") },
+    };
+
+    if (exerciseRelationId && !String(exerciseRelationId).startsWith("local-")) {
+      properties["Exercise"] = { relation: relation(exerciseRelationId) };
+    }
+
     await notionRequest("/pages", {
       method: "POST",
       body: JSON.stringify({
         parent: { database_id: env.templateExercisesDb },
-        properties: {
-          "Template Exercise": { title: titleText(`${name} · ${ex.name || ex.exercise || "Exercise"}`) },
-          "Template Link": { relation: relation(template.id) },
-          "Exercise Link": { relation: relation(ex.exerciseId || ex.id) },
-          "Order": { number: i + 1 },
-          "Target Sets": { number: numberOrNull(ex.targetSets) },
-          "Target Reps": { rich_text: richText(ex.targetReps || "") },
-          "Notes": { rich_text: richText(ex.notes || "") },
-        },
+        properties,
       }),
     });
     count++;
