@@ -420,3 +420,9 @@
   transform:scale(.99);
   filter:brightness(.98);
 }
+
+
+/* Cycle phase rename: Shark-week */
+.cyclePhase.shark-week{
+  background:linear-gradient(135deg,#fff1f2,#fff);
+}

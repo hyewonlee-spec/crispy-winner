@@ -117,6 +117,11 @@ function calculateCycleDashboard(date, periodStartDate, logs) {
     };
   }
 
+  const latestStartLog = (logs || [])
+    .filter((log) => log.periodStartDate === periodStartDate)
+    .sort((a, b) => String(b.date || b.periodStartDate).localeCompare(String(a.date || a.periodStartDate)))[0];
+  const hasOpenPeriod = latestStartLog && !latestStartLog.periodEndDate;
+
   const averageCycleLength = calculateAverageCycleLength(logs);
   const averagePeriodLength = calculateAveragePeriodLength(logs);
   const rawDaysSinceStart = daysBetween(periodStartDate, date);
@@ -135,8 +140,10 @@ function calculateCycleDashboard(date, periodStartDate, logs) {
   let phase = "Luteal";
   const ovulationCycleDay = averageCycleLength - 13;
 
-  if (cycleDay <= Math.max(3, Math.min(7, Math.round(averagePeriodLength || 5)))) {
-    phase = "Menstrual";
+  if (hasOpenPeriod) {
+    phase = "Shark-week";
+  } else if (cycleDay <= Math.max(3, Math.min(7, Math.round(averagePeriodLength || 5)))) {
+    phase = "Shark-week";
   } else if (cycleDay < ovulationCycleDay - 1) {
     phase = "Follicular";
   } else if (cycleDay <= ovulationCycleDay + 1) {
@@ -185,7 +192,7 @@ function cycleTrainingRecommendation(cycle) {
     return "Reduce load 10–20%";
   }
 
-  if (cycle.phase === "Menstrual" && cycle.bleedingFlow !== "None") {
+  if (cycle.phase === "Shark-week" && cycle.bleedingFlow !== "None") {
     return "Technique / moderate strength";
   }
 
