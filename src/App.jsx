@@ -653,7 +653,7 @@ export default function App(){
       <main className="shell"><header className="header"><div><p className="overline">Muscle Royalty</p><h1>Dashboard</h1></div><button className="mini" onClick={()=>loadExercises(true)} disabled={busy.library}><Spinner on={busy.library}/> Sync</button></header>
     {tab==="today"&&<section className="stack dashboardToday">
   <div className="panel readinessCheckPanel">
-    <div className="sectionTitle"><CalendarDays size={20}/><h2>Are you ready for a workout?</h2></div>
+    <div className="sectionTitle"><CalendarDays size={20}/><h2>Condition checkpoint</h2></div>
     <div className="todayDatePlain">{formatAuLongDate(todayIso())}</div>
     <div className="readinessInputs">
       <Slider label="Sleep quality" value={sleep} setValue={setSleep} lowGood={false} midLabel="Okay"/>
@@ -662,8 +662,8 @@ export default function App(){
     </div>
   </div>
 
-  {trackCycle==="yes"&&<button type="button" className="panel cycleTodayCard cycleTodayButton" onClick={()=>setTab("cycle")}>
-    <div className="sectionTitle"><Sparkles size={20}/><h2>Cycle-aware training</h2></div>
+  {trackCycle==="yes"&&<button type="button" className="panel cycleTodayCard cycleTodayButton sharkWatchToday" onClick={()=>{setTab("cycle");setTimeout(()=>document.getElementById("cycle-check-in")?.scrollIntoView({behavior:"smooth",block:"start"}),80)}}>
+    <div className="sectionTitle"><Sparkles size={20}/><h2>Shark watch</h2></div>
     <div className={`cyclePhase compact ${(currentCycle.phase||"").toLowerCase().replaceAll(" ","-")}`}>
       <h3>{currentCycle.phase}</h3>
       <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
@@ -672,7 +672,7 @@ export default function App(){
 
 
 
-  <textarea className="notes" placeholder="Notes…" value={notes} onChange={e=>setNotes(e.target.value)}/>
+  
 
   <Button variant="primary" full busy={busy.save} onClick={recordDayAndPromptWorkout}><Save size={16}/> {dayRecordedToday ? "Start workout" : "Record and start workout"}</Button>
 
@@ -738,7 +738,7 @@ export default function App(){
     </div>
   </div>
 
-  <div className="panel cyclePanel">
+  <div className="panel cyclePanel" id="cycle-check-in">
     <div className="sectionTitle"><Activity size={20}/><h2>Cycle-aware check-in</h2></div>
     <div className="centeredDatePlain">{formatAuDate(todayIso())}</div>
 
