@@ -307,3 +307,14 @@
   .previousPeriodFieldsSide .secondary{width:70%}
   .smallPreviousCycleButton{width:44%}
 }
+
+
+/* Phase 10.3 menstruation tracking choice */
+.menstruationChoiceModal p{
+  color:var(--muted);
+  font-weight:700;
+}
+.bottomNav.five{grid-template-columns:repeat(5,1fr)}
+@media(max-width:430px){
+  .bottomNav.five button{font-size:11.5px}
+}
