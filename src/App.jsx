@@ -451,7 +451,7 @@ export default function App(){
       const r=await fetch("/api/workouts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const j=await r.json();
       if(!r.ok)throw new Error(j.error||"Save failed");
-      setActiveWorkout(null); await loadHistory(false); localStorage.removeItem(STORAGE_KEY);
+      setActiveWorkout(null); setTab("today"); await loadHistory(false); localStorage.removeItem(STORAGE_KEY);
       show("Today’s workout has been recorded, WELL DONE!","success");
       window.setTimeout(()=>alert("Today’s workout has been recorded, WELL DONE!"),100);
     }catch(e){show(`Workout end failed: ${e.message}`,"error")}finally{setBusy(b=>({...b,save:false}))}
