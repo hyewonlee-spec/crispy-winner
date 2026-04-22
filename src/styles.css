@@ -611,3 +611,13 @@
 .workoutBottomAddExercise{
   margin-top:8px;
 }
+
+/* More page patch */
+.morePage .aboutMeBox p{
+  line-height:1.55;
+  color:var(--ink);
+  font-weight:700;
+}
+.morePage .aboutMeBox strong{
+  color:#5b21b6;
+}
