@@ -117,3 +117,16 @@
 .helperText{display:none}
 .cycleTodayCard .cyclePhase{margin-bottom:0}
 .periodStateBox.endedPeriod .secondary{background:#f5f3ff}
+
+
+/* Phase 9 active workout flow */
+.modalShade{position:fixed;inset:0;z-index:200;background:rgba(15,15,20,.42);display:grid;place-items:center;padding:20px}
+.modalBox{width:min(100%,420px);background:#fff;border:1px solid var(--line);border-radius:28px;padding:20px;box-shadow:0 22px 60px rgba(0,0,0,.22);display:grid;gap:14px;text-align:center;color:#25153d}
+.app.activeWorkoutMode{--lav:#ff1493;--lav2:#ff69b4;--lav3:#ffe4f3;--lav4:#0a0a0a;--ink:#fff;--muted:#ffc1df;--line:#ff4fb3;--card:rgba(18,18,18,.92);background:#050505;color:#fff}
+.app.activeWorkoutMode .header,.app.activeWorkoutMode .bottomNav{background:rgba(0,0,0,.92);border-color:#ff1493}
+.app.activeWorkoutMode .panel,.app.activeWorkoutMode .slider,.app.activeWorkoutMode .coach,.app.activeWorkoutMode .chart,.app.activeWorkoutMode .empty{background:rgba(16,16,16,.94);border-color:#ff1493;box-shadow:0 0 0 1px rgba(255,20,147,.15),0 18px 40px rgba(255,20,147,.12)}
+.app.activeWorkoutMode .primary,.app.activeWorkoutMode .mini,.app.activeWorkoutMode .bottomNav button.active{background:#ff1493;border-color:#ff1493;color:#050505}
+.app.activeWorkoutMode .secondary,.app.activeWorkoutMode .ghost,.app.activeWorkoutMode input,.app.activeWorkoutMode textarea,.app.activeWorkoutMode select,.app.activeWorkoutMode .setRow input{background:#111;border-color:#ff69b4;color:#fff}
+.workoutNameInput{width:100%;border:1px solid var(--line);border-radius:18px;background:#fff;padding:10px 12px;font-weight:900;font-size:clamp(18px,4vw,23px);color:var(--ink)}
+.setHeader.noRpe,.setRow.noRpe{grid-template-columns:34px 1fr 1fr 34px}
+@media(max-width:380px){.setHeader.noRpe,.setRow.noRpe{grid-template-columns:28px 1fr 1fr 28px}}

@@ -70,7 +70,6 @@ async function createExerciseSet(workoutExerciseId, exerciseName, set, index) {
         "Weight": { number: numberOrNull(set.weight) },
         "Weight Unit": { select: { name: set.weightUnit || "kg" } },
         "Reps": { number: numberOrNull(set.reps) },
-        "RPE": { number: numberOrNull(set.rpe) },
         "Completed": { checkbox: set.completed !== false },
         "Set Notes": { rich_text: richText(set.notes || "") },
       },
@@ -85,8 +84,22 @@ module.exports = async function handler(req, res) {
   try {
     const log = req.body || {};
     const exercises = Array.isArray(log.exercises) ? log.exercises : [];
-    const session = await createWorkoutSession(log);
-    let exerciseCount = 0, setCount = 0;
+    const session = log.existingSessionId
+      ? { id: log.existingSessionId, url: log.existingSessionUrl || "" }
+      : await createWorkoutSession(log);
+
+    if (log.action === "start") {
+      return res.status(201).json({
+        status: "success",
+        sessionId: session.id,
+        sessionUrl: session.url,
+        workoutExercisesCreated: 0,
+        setsCreated: 0,
+      });
+    }
+
+    let exerciseCount = 0;
+    let setCount = 0;
     for (let i = 0; i < exercises.length; i++) {
       const exercise = exercises[i];
       if (!exercise.exerciseId && !exercise.id) throw new Error(`Exercise "${exercise.name || exercise.exercise || i + 1}" is missing exerciseId. Select it from the library first.`);
