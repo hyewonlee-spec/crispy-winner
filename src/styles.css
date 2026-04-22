@@ -452,3 +452,47 @@
     max-width:70%;
   }
 }
+
+/* Stronger previous-cycle date field reduction */
+.previousCycleDateField,
+.previousPeriodFields .field,
+.previousPeriodFieldsSide .field,
+.previousCycleBox .field,
+.previousPeriodBox .field{
+  width:60% !important;
+  max-width:180px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.previousCycleDateInput,
+.previousCycleDateField input[type="date"],
+.previousPeriodFields input[type="date"],
+.previousPeriodFieldsSide input[type="date"],
+.previousCycleBox input[type="date"],
+.previousPeriodBox input[type="date"]{
+  width:100% !important;
+  max-width:180px !important;
+  height:32px !important;
+  min-height:32px !important;
+  padding:4px 8px !important;
+  font-size:12px !important;
+  line-height:1.1 !important;
+  border-radius:12px !important;
+}
+.previousPeriodFields,
+.previousPeriodFieldsSide,
+.previousCycleBox,
+.previousPeriodBox{
+  justify-items:center !important;
+  align-items:center !important;
+}
+@media(max-width:430px){
+  .previousCycleDateField,
+  .previousPeriodFields .field,
+  .previousPeriodFieldsSide .field,
+  .previousCycleBox .field,
+  .previousPeriodBox .field{
+    width:68% !important;
+    max-width:170px !important;
+  }
+}
