@@ -570,3 +570,19 @@
 #cycle-check-in{
   scroll-margin-top:90px;
 }
+
+
+/* Workout page cleanup */
+.workoutDisplayTitle{
+  margin:0;
+  font-size:clamp(20px,5.8vw,28px);
+  font-weight:900;
+  color:var(--ink);
+}
+.exerciseCard .exerciseTop h3{
+  font-size:clamp(15px,4.2vw,19px);
+  line-height:1.15;
+}
+.workoutBottomAddExercise{
+  margin-top:8px;
+}
