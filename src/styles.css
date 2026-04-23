@@ -1,0 +1,623 @@
+:root{--lav:#8b5cf6;--lav2:#a78bfa;--lav3:#ede9fe;--lav4:#faf5ff;--ink:#25153d;--muted:#76658f;--line:#e9d5ff;--card:rgba(255,255,255,.88);--bad:#fee2e2;--ok:#dcfce7}*{box-sizing:border-box}body{margin:0;background:var(--lav4);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.6;cursor:not-allowed}.app{min-height:100vh;background:radial-gradient(circle at top left,#f3e8ff,#faf5ff 48%,#fff);padding:clamp(8px,2.5vw,18px)}.shell{width:min(100%,720px);margin:0 auto;padding-bottom:calc(104px + env(safe-area-inset-bottom))}.header{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;margin:calc(clamp(8px,2.5vw,18px)*-1) calc(clamp(8px,2.5vw,18px)*-1) 16px;padding:calc(12px + env(safe-area-inset-top)) clamp(14px,4vw,24px) 12px;border-bottom:1px solid var(--line);background:rgba(250,245,255,.88);backdrop-filter:blur(14px)}h1,h2,h3,p{margin:0}h1{font-size:clamp(20px,5vw,28px)}h2{font-size:clamp(18px,4vw,23px)}h3{font-size:clamp(16px,3.5vw,20px)}.big{font-size:clamp(30px,9vw,44px)}.overline{font-size:11px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}.stack{display:grid;gap:clamp(12px,3vw,18px)}.panel,.slider,.coach,.saveStatus,.empty,.chart{border:1px solid var(--line);border-radius:28px;background:var(--card);box-shadow:0 14px 30px rgba(91,33,182,.08);padding:clamp(14px,4vw,20px)}.sectionTitle{display:flex;align-items:center;gap:8px;margin-bottom:12px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.muted{color:var(--muted);font-size:14px}.label,.field span,.slider span{display:block;color:#4c1d95;font-size:14px;font-weight:850}.input,.field input,textarea,select{width:100%;border:1px solid var(--line);border-radius:18px;background:#fff;padding:12px 13px;margin-top:6px;color:var(--ink)}input:focus,textarea:focus,select:focus{outline:3px solid #ddd6fe;border-color:var(--lav)}.notes{min-height:100px;resize:vertical}.notes.small{min-height:70px;margin-top:12px}.coach{display:flex;align-items:flex-start;gap:10px;color:#5b21b6;background:#f5f3ff}.bubble{display:grid;place-items:center;width:54px;height:54px;border-radius:999px;background:var(--lav3);color:var(--lav)}.meter{height:10px;border-radius:999px;background:#e9d5ff;overflow:hidden;margin-top:12px}.meter span{display:block;height:100%;background:linear-gradient(90deg,var(--lav2),var(--lav))}.rangeLabels{display:flex;justify-content:space-between;color:#a78bfa;font-size:11px}.slider input[type=range]{width:100%;accent-color:var(--lav)}.builderToggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.builderToggle button,.plan,.mini,.primary,.secondary,.ghost,.iconBtn,.collapseBtn,.historyBtn,.linkBtn{border-radius:18px;border:1px solid var(--line);font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px}.builderToggle button{background:white;padding:12px}.builderToggle button.active,.primary{background:linear-gradient(135deg,var(--lav),#7c3aed);color:white;border-color:var(--lav)}.planStack{display:grid;gap:8px}.plan{background:white;padding:12px;text-align:left;justify-content:space-between}.plan span:first-child{display:grid;gap:4px}.plan small{color:var(--muted)}.secondary{background:white;color:#5b21b6;min-height:48px}.ghost{background:transparent;color:#5b21b6;border-color:transparent;min-height:42px}.mini{background:var(--lav);color:white;padding:9px 12px;border-color:var(--lav);font-size:12px}.full{width:100%;min-height:48px}.workoutHeader{display:flex;justify-content:space-between;gap:12px;align-items:center}.empty{text-align:center;display:grid;gap:10px;place-items:center;color:var(--muted)}.exerciseTop{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}.iconBtn,.collapseBtn{height:38px;width:38px;background:white}.note,.previous{border-radius:18px;background:#f5f3ff;padding:10px;margin:10px 0;color:#5b21b6;font-size:14px}.previous{display:inline-block;font-weight:850;background:#ede9fe}.miniGrid,.twoCol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.setHeader,.setRow{display:grid;grid-template-columns:34px 1fr 1fr 1fr 34px;gap:8px;align-items:center}.setHeader{margin-top:14px;color:var(--muted);font-size:12px;font-weight:900;padding:0 2px}.sets{display:grid;gap:8px;margin:8px 0 12px}.setRow input{border:1px solid var(--line);border-radius:14px;padding:10px 8px;min-width:0}.setDelete{height:34px;border:0;border-radius:999px;background:var(--bad);color:#991b1b;font-weight:900}.symptomDetails{border-radius:20px;background:#faf5ff;padding:12px;margin:12px 0}.symptomDetails summary{font-weight:900;color:#5b21b6}.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:18px;background:white;padding:0 10px;margin-top:12px}.search input{border:0;outline:0;width:100%;padding:12px 0}.exerciseList{display:grid;gap:10px}.libraryItem{border:1px solid var(--line);border-radius:22px;background:white;padding:12px}.libraryItem>button:first-child{width:100%;display:flex;align-items:flex-start;justify-content:space-between;text-align:left;border:0;background:transparent;padding:0}.libraryItem p,.libraryItem small{display:block;color:var(--muted);margin-top:4px}.libraryItem.avoid-for-now{background:#fff7ed}.libraryItem.caution{background:#fffbeb}.historyBtn{margin-top:10px;background:#faf5ff;color:#5b21b6;padding:8px 10px}.saveStatus{background:var(--lav);color:white;font-weight:800}.toast{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:100;width:min(calc(100% - 24px),720px);border-radius:22px;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;align-items:center;box-shadow:0 18px 35px rgba(91,33,182,.18);font-weight:800}.toast.info{background:var(--lav);color:white}.toast.success{background:var(--ok);color:#14532d}.toast.error{background:var(--bad);color:#991b1b}.toast button{border:0;background:transparent;font-size:22px;color:inherit}.statsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.stat{border:1px solid var(--line);border-radius:24px;background:white;padding:14px}.stat p{color:var(--muted);font-size:13px}.stat strong{font-size:clamp(24px,7vw,34px)}.bars{height:160px;display:flex;align-items:end;gap:8px;margin-top:14px}.barCol{flex:1;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:5px}.barCol span{display:block;width:100%;min-height:3px;border-radius:999px 999px 6px 6px;background:linear-gradient(var(--lav2),var(--lav))}.barCol small{font-size:11px;color:var(--muted)}.sessionList{display:grid;gap:8px;margin-top:12px}.sessionItem{border:1px solid var(--line);border-radius:20px;background:white;padding:12px}.pill{border-radius:999px;background:var(--lav3);color:#5b21b6;padding:5px 9px;font-size:12px;font-weight:900}.errorText{color:#991b1b;margin-top:8px}.linkBtn{border:0;background:transparent;color:#7c3aed}li{margin:8px 0;color:#4c1d95;font-size:14px}code{background:#f5f3ff;border-radius:6px;padding:2px 5px}.bottomNav{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));z-index:30;width:min(calc(100% - 24px),720px);transform:translateX(-50%);display:grid;grid-template-columns:repeat(5,1fr);gap:6px;border:1px solid var(--line);border-radius:28px;background:rgba(255,255,255,.94);padding:8px;box-shadow:0 15px 35px rgba(91,33,182,.16);backdrop-filter:blur(12px)}.bottomNav button{border:0;border-radius:18px;background:transparent;color:var(--muted);padding:12px 4px;font-weight:900;font-size:clamp(11px,2.7vw,13px)}.bottomNav button.active{background:var(--lav);color:white}.spin{animation:spin 1s linear infinite}@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@media(max-width:420px){.miniGrid,.twoCol{grid-template-columns:1fr}.setHeader,.setRow{grid-template-columns:28px 1fr 1fr 1fr 28px;gap:5px}.setRow input{padding:9px 6px}.workoutHeader{align-items:stretch;flex-direction:column}}@media(min-width:760px){.stack{gap:18px}.exerciseList{grid-template-columns:repeat(2,1fr)}}
+
+/* Phase 5 iPhone feedback polish */
+.dateLabel{max-width:52%;min-width:170px}
+.dateInput{width:100%;max-width:210px}
+.helperText{font-size:12px;color:var(--muted);margin-top:-4px}
+.readiness.green{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-color:#86efac}
+.readiness.amber{background:linear-gradient(135deg,#fffbeb,#fde68a);border-color:#fbbf24}
+.readiness.red{background:linear-gradient(135deg,#fef2f2,#fecaca);border-color:#f87171}
+.readiness.green .bubble{background:#dcfce7;color:#15803d}
+.readiness.amber .bubble{background:#fef3c7;color:#b45309}
+.readiness.red .bubble{background:#fee2e2;color:#b91c1c}
+.slider input[type=range]{height:34px}
+.slider input[type=range]::-webkit-slider-thumb{width:28px;height:28px;background:#6d28d9;border:3px solid #fff;box-shadow:0 2px 8px rgba(91,33,182,.35)}
+.slider input[type=range]::-moz-range-thumb{width:28px;height:28px;background:#6d28d9;border:3px solid #fff;box-shadow:0 2px 8px rgba(91,33,182,.35)}
+.ack{animation:ackPulse .26s ease-out}
+@keyframes ackPulse{0%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(.94);transform:scale(.985);box-shadow:0 0 0 4px rgba(139,92,246,.18)}100%{filter:brightness(1);transform:scale(1)}}
+.lineChart{width:100%;height:150px;color:var(--lav);background:linear-gradient(#fff,#faf5ff);border-radius:18px;padding:8px}
+.lineChart circle{fill:var(--lav)}
+.chartLabels{display:flex;justify-content:space-between;gap:4px;color:var(--muted);font-size:11px;margin-top:4px;overflow:hidden}
+.overviewGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.miniOverview p{margin-top:7px;color:var(--muted)}
+.checkGrid{display:grid;gap:12px}
+.checkCard ul{padding-left:20px}
+@media(min-width:680px){.checkGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.dateLabel{max-width:58%;min-width:150px}.dateInput{max-width:180px}.overviewGrid{grid-template-columns:1fr}.lineChart{height:130px}}
+
+
+/* Phase 6 cycle-aware training */
+.cyclePanel{background:linear-gradient(135deg,#fff,#faf5ff)}
+.cycleMini{background:#fbf7ff}
+.cycleMini p{color:var(--muted);margin-top:4px}
+.cyclePhase{border:1px solid var(--line);border-radius:24px;background:#fff;padding:14px;margin-bottom:12px;display:grid;gap:6px}
+.cyclePhase h2{color:#6d28d9}
+.cyclePhase strong{display:inline-flex;width:max-content;max-width:100%;border-radius:999px;background:#ede9fe;color:#5b21b6;padding:7px 10px}
+.cyclePhase.menstrual{background:linear-gradient(135deg,#fff1f2,#fff)}
+.cyclePhase.follicular{background:linear-gradient(135deg,#ecfdf5,#fff)}
+.cyclePhase.ovulation-window{background:linear-gradient(135deg,#fefce8,#fff)}
+.cyclePhase.luteal{background:linear-gradient(135deg,#f5f3ff,#fff)}
+.cyclePanel input[type=range]{width:100%;accent-color:var(--lav);height:30px}
+.cyclePanel .field b{display:block;text-align:right;color:#6d28d9;margin-top:2px}
+
+
+/* Phase 7 separate Cycle tab */
+.bottomNav.six{grid-template-columns:repeat(6,1fr)}
+.cycleHeroGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.cycleHeroGrid div{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.75);padding:10px}
+.cycleHeroGrid span{display:block;font-size:12px;color:var(--muted);font-weight:800}
+.cycleHeroGrid b{display:block;font-size:clamp(18px,5vw,26px);color:#5b21b6;margin-top:3px;word-break:break-word}
+@media(max-width:430px){.bottomNav.six{gap:4px}.bottomNav.six button{font-size:10.5px;padding:10px 2px}.cycleHeroGrid{grid-template-columns:1fr}}
+
+
+/* Phase 8 cycle event workflow */
+.periodActionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.periodAction{border:1px solid var(--line);background:#fff;border-radius:22px;padding:12px;display:grid;gap:10px}
+.periodAction h3{color:#5b21b6}
+@media(max-width:520px){.periodActionGrid{grid-template-columns:1fr}}
+
+
+/* Phase 8.1 cycle UI feedback */
+.periodActionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.periodAction{border:1px solid var(--line);background:#fff;border-radius:22px;padding:12px;display:grid;gap:10px}
+.periodAction h3{color:#5b21b6}
+.centerControl{margin-left:auto;margin-right:auto}
+.wide80{width:80%;max-width:360px}
+.halfWidth{width:50%;max-width:240px;margin-left:auto;margin-right:auto}
+.centerField{display:block;text-align:left}
+.centerField input{width:100%}
+.periodCalcNote{margin-top:22px}
+.symptomButtonGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.symptomButton{border:1px solid var(--line);background:#fff;border-radius:20px;padding:13px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--ink);font-weight:850;min-height:58px}
+.symptomButton span{font-size:14px}
+.symptomButton b{border-radius:999px;background:#f5f3ff;color:#6d28d9;padding:6px 10px;font-size:13px}
+.symptomButton.active{background:#ede9fe;border-color:#a78bfa;box-shadow:0 0 0 4px rgba(139,92,246,.12)}
+.symptomButton.active b{background:#7c3aed;color:#fff}
+@media(max-width:520px){.periodActionGrid{grid-template-columns:1fr}.symptomButtonGrid{grid-template-columns:1fr}.halfWidth{width:70%;max-width:260px}.wide80{width:90%}}
+@media(max-width:390px){.halfWidth{width:82%}.wide80{width:96%}}
+
+
+/* Phase 8.2 period flow */
+.periodStatusPanel{position:relative}
+.periodStateBox{border:1px solid var(--line);border-radius:24px;padding:16px;background:#fff;display:grid;gap:8px;margin-top:12px;text-align:center}
+.periodStateBox h3{color:#5b21b6;font-size:clamp(22px,6vw,32px)}
+.periodStateBox.waiting{background:linear-gradient(135deg,#fff,#faf5ff)}
+.periodStateBox.activePeriod{background:linear-gradient(135deg,#fdf2f8,#fff)}
+.periodStateBox.endedPeriod{background:linear-gradient(135deg,#f5f3ff,#fff)}
+.periodDatePopup{border:1px solid #c4b5fd;background:#fff;box-shadow:0 18px 38px rgba(91,33,182,.16);border-radius:24px;padding:16px;margin-top:14px;display:grid;gap:12px}
+.periodDatePopup h3{text-align:center;color:#5b21b6}
+.periodDatePopup input{width:70%;max-width:260px;margin:0 auto;border:1px solid var(--line);border-radius:18px;padding:12px;background:#fff}
+.periodPopupActions{display:flex;gap:10px;justify-content:center}
+.smallButton{min-height:38px;padding:8px 18px;width:auto}
+@media(max-width:430px){.periodDatePopup input{width:88%}.periodPopupActions{flex-direction:row}.smallButton{min-width:96px}}
+
+
+/* Phase 8.3 cycle cleanup */
+.cyclePhase.compact{margin:0}
+.todayCycleGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cycleTodayCard{background:linear-gradient(135deg,#fff,#faf5ff)}
+.periodStatusPanel .muted + h3{margin-top:2px}
+.cyclePhase > p.muted:last-child{display:none}
+@media(max-width:430px){.todayCycleGrid{grid-template-columns:1fr 1fr}}
+
+
+/* Phase 8.4 clean UI */
+.pastelLinkBox{
+  width:100%;
+  border:1px solid #ddd6fe;
+  background:linear-gradient(135deg,#f5f3ff,#fdf2f8);
+  color:#6d28d9;
+  border-radius:20px;
+  padding:13px 14px;
+  margin-top:12px;
+  font-weight:900;
+  text-align:center;
+}
+.pastelLinkBox:active{transform:scale(.99);filter:brightness(.97)}
+.helperText{display:none}
+.cycleTodayCard .cyclePhase{margin-bottom:0}
+.periodStateBox.endedPeriod .secondary{background:#f5f3ff}
+
+
+/* Phase 9 active workout flow */
+.modalShade{position:fixed;inset:0;z-index:200;background:rgba(15,15,20,.42);display:grid;place-items:center;padding:20px}
+.modalBox{width:min(100%,420px);background:#fff;border:1px solid var(--line);border-radius:28px;padding:20px;box-shadow:0 22px 60px rgba(0,0,0,.22);display:grid;gap:14px;text-align:center;color:#25153d}
+.app.activeWorkoutMode{--lav:#ff1493;--lav2:#ff69b4;--lav3:#ffe4f3;--lav4:#0a0a0a;--ink:#fff;--muted:#ffc1df;--line:#ff4fb3;--card:rgba(18,18,18,.92);background:#050505;color:#fff}
+.app.activeWorkoutMode .header,.app.activeWorkoutMode .bottomNav{background:rgba(0,0,0,.92);border-color:#ff1493}
+.app.activeWorkoutMode .panel,.app.activeWorkoutMode .slider,.app.activeWorkoutMode .coach,.app.activeWorkoutMode .chart,.app.activeWorkoutMode .empty{background:rgba(16,16,16,.94);border-color:#ff1493;box-shadow:0 0 0 1px rgba(255,20,147,.15),0 18px 40px rgba(255,20,147,.12)}
+.app.activeWorkoutMode .primary,.app.activeWorkoutMode .mini,.app.activeWorkoutMode .bottomNav button.active{background:#ff1493;border-color:#ff1493;color:#050505}
+.app.activeWorkoutMode .secondary,.app.activeWorkoutMode .ghost,.app.activeWorkoutMode input,.app.activeWorkoutMode textarea,.app.activeWorkoutMode select,.app.activeWorkoutMode .setRow input{background:#111;border-color:#ff69b4;color:#fff}
+.workoutNameInput{width:100%;border:1px solid var(--line);border-radius:18px;background:#fff;padding:10px 12px;font-weight:900;font-size:clamp(18px,4vw,23px);color:var(--ink)}
+.setHeader.noRpe,.setRow.noRpe{grid-template-columns:34px 1fr 1fr 34px}
+@media(max-width:380px){.setHeader.noRpe,.setRow.noRpe{grid-template-columns:28px 1fr 1fr 28px}}
+
+/* Phase 10 Muscle Queens dashboard */
+.todayDateDisplay{
+  text-align:center;
+  font-weight:900;
+  font-size:clamp(18px,5vw,24px);
+  color:#6d28d9;
+  padding:10px 12px;
+  border-radius:18px;
+  background:#f5f3ff;
+}
+.readinessInputs{display:grid;gap:10px}
+.symptomsPanel{display:grid;gap:10px}
+.phaseLarge{
+  text-align:center;
+  font-size:clamp(34px,10vw,52px)!important;
+  color:#5b21b6;
+}
+.todayCycleGrid{
+  display:grid;
+  grid-template-columns:1fr!important;
+  justify-items:center;
+}
+.nextPeriodBox{
+  width:min(100%,280px);
+  text-align:center;
+}
+.trainingBubble{
+  display:flex!important;
+  justify-content:center;
+  width:max-content;
+  max-width:100%;
+  margin:12px auto 0;
+  text-align:center;
+}
+.cycleTodayCard .pastelLinkBox{
+  background:#fce7f3;
+  border-color:#f9a8d4;
+  color:#be185d;
+}
+.flowBubbleGrid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+.flowBubble{
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fff;
+  padding:9px 13px;
+  font-weight:900;
+  color:#6d28d9;
+}
+.flowBubble.active{
+  background:#7c3aed;
+  color:#fff;
+  border-color:#7c3aed;
+}
+.compactSymptoms{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+.compactSymptoms .symptomButton{
+  min-height:46px;
+  padding:9px 10px;
+}
+.compactSymptoms .symptomButton span{
+  font-size:13px;
+}
+.compactSymptoms .symptomButton b{
+  padding:4px 8px;
+  font-size:12px;
+}
+.cyclePanel .centerField.halfWidth{
+  width:40%;
+  max-width:190px;
+  margin-bottom:18px;
+}
+.cyclePanel .flowField{
+  margin-top:18px;
+}
+.cyclePanel .notes.small{
+  margin-top:18px;
+}
+@media(max-width:430px){
+  .compactSymptoms{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}
+  .compactSymptoms .symptomButton{padding:8px;gap:6px}
+  .compactSymptoms .symptomButton span{font-size:12px}
+  .cyclePanel .centerField.halfWidth{width:56%;max-width:190px}
+}
+
+
+/* Phase 10.1 polish */
+.todayDatePlain{text-align:center;font-weight:900;font-size:clamp(18px,5vw,24px);color:#6d28d9;padding:4px 0 8px;background:transparent!important;border:0!important;box-shadow:none!important}.rangeLabels.three{display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center}.rangeLabels.three span:first-child{text-align:left}.rangeLabels.three span:last-child{text-align:right}.todaySymptomToggleGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.todaySymptomToggleGrid .symptomButton:last-child{grid-column:1/-1}.cycleCheckDateDisplay{width:80%;max-width:260px;margin:0 auto 22px;text-align:center;font-weight:900;color:#6d28d9;padding:8px 10px;border-radius:16px;background:#faf5ff}.previousPeriodBox{margin-top:14px}.previousPeriodFields{display:grid;gap:10px;margin-top:10px;border:1px solid var(--line);border-radius:20px;background:#fff;padding:12px}
+/* Softer active workout mode: default surface, hot-pink accents only */
+.app.activeWorkoutMode{--lav:#ff1493;--lav2:#ff69b4;--lav3:#ffe4f3;--lav4:#faf5ff;--ink:#25153d;--muted:#76658f;--line:#f9a8d4;--card:rgba(255,255,255,.92);background:radial-gradient(circle at top left,#ffe4f3,#faf5ff 48%,#fff);color:var(--ink)}.app.activeWorkoutMode .header,.app.activeWorkoutMode .bottomNav{background:rgba(255,255,255,.94);border-color:#f9a8d4}.app.activeWorkoutMode .panel,.app.activeWorkoutMode .slider,.app.activeWorkoutMode .coach,.app.activeWorkoutMode .chart,.app.activeWorkoutMode .empty{background:var(--card);border-color:#f9a8d4;box-shadow:0 14px 30px rgba(255,20,147,.08)}.app.activeWorkoutMode .primary,.app.activeWorkoutMode .mini,.app.activeWorkoutMode .bottomNav button.active{background:#ff1493;border-color:#ff1493;color:#fff}.app.activeWorkoutMode .secondary,.app.activeWorkoutMode .ghost,.app.activeWorkoutMode input,.app.activeWorkoutMode textarea,.app.activeWorkoutMode select,.app.activeWorkoutMode .setRow input{background:#fff;border-color:#f9a8d4;color:var(--ink)}.app.activeWorkoutMode .builderToggle button.active{background:#ff1493;border-color:#ff1493;color:#fff}@media(max-width:520px){.todaySymptomToggleGrid{grid-template-columns:1fr}.cycleCheckDateDisplay{width:70%}}
+
+
+/* Phase 10.2 dashboard + cycle refinements */
+.toggleHeaderButton{
+  width:100%;
+  border:0;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:var(--ink);
+  font-weight:900;
+  font-size:clamp(17px,4vw,21px);
+  padding:0;
+}
+.toggleHeaderButton span{display:inline-flex;align-items:center;gap:8px}
+.toggleHeaderButton b{
+  border-radius:999px;
+  background:#f5f3ff;
+  color:#6d28d9;
+  padding:7px 10px;
+  font-size:13px;
+}
+.statusMeaning{
+  color:var(--muted);
+  margin-top:6px;
+  font-size:14px;
+  font-weight:800;
+}
+.nextDuePanel{
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:linear-gradient(135deg,#fff,#faf5ff);
+  padding:14px;
+  margin-bottom:12px;
+  text-align:center;
+}
+.nextDuePanel span{
+  display:block;
+  color:var(--muted);
+  font-weight:900;
+  font-size:13px;
+}
+.nextDuePanel b{
+  display:block;
+  color:#6d28d9;
+  font-size:clamp(26px,8vw,40px);
+  margin-top:4px;
+}
+.smallPreviousCycleButton{
+  width:30%;
+  min-width:132px;
+  max-width:190px;
+  margin:0 auto;
+  padding:9px 8px;
+  font-size:12px;
+  display:block;
+}
+.previousPeriodFieldsSide{
+  grid-template-columns:1fr 1fr;
+  align-items:end;
+}
+.previousPeriodFieldsSide .secondary{
+  grid-column:1/-1;
+  width:50%;
+  margin:0 auto;
+}
+.workoutChooserModal .chooserPlanList{
+  display:grid;
+  gap:8px;
+  max-height:52vh;
+  overflow:auto;
+}
+.chooserActions{display:grid;gap:8px}
+@media(max-width:430px){
+  .previousPeriodFieldsSide{grid-template-columns:1fr 1fr}
+  .previousPeriodFieldsSide .field input{padding:9px 6px;font-size:13px}
+  .previousPeriodFieldsSide .secondary{width:70%}
+  .smallPreviousCycleButton{width:44%}
+}
+
+
+/* Phase 10.3 menstruation tracking choice */
+.menstruationChoiceModal p{
+  color:var(--muted);
+  font-weight:700;
+}
+.bottomNav.five{grid-template-columns:repeat(5,1fr)}
+@media(max-width:430px){
+  .bottomNav.five button{font-size:11.5px}
+}
+
+/* Muscle Royalty safe fix */
+:root{--royal:#5b21b6;--royal2:#7c3aed}
+.primary,.secondary,.pastelLinkBox,.symptomButton.active,.flowBubble.active,.toggleHeaderButton b,.bottomNav button.active{
+  background:#5b21b6;border-color:#5b21b6;color:#fff;
+}
+.ghost{color:#5b21b6}
+.modalBox .secondary{background:white;color:#5b21b6}
+.modalBox .primary{background:#5b21b6;color:#fff}
+.flowBubbleGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.flowBubble{border:1px solid var(--line);border-radius:999px;background:#fff;padding:10px 12px;font-weight:900;color:var(--ink)}
+.dangerLink{color:#be123c;font-weight:900}
+
+/* Phase 10.5 Today clean-up */
+.dashboardToday .notes{margin-top:0}
+
+/* Phase 10.6 Cycle page only */
+.emptyMini{
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:#fff;
+  padding:14px;
+  color:var(--muted);
+  font-weight:800;
+  text-align:center;
+}
+.dangerLink{
+  color:#be123c;
+  font-weight:900;
+}
+.flowBubbleGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin-top:8px;
+}
+.flowBubble{
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fff;
+  padding:10px 12px;
+  font-weight:900;
+  color:var(--ink);
+}
+.flowBubble.active{
+  background:#5b21b6;
+  border-color:#5b21b6;
+  color:#fff;
+}
+.centeredDatePlain{
+  text-align:center;
+  font-weight:900;
+  color:#5b21b6;
+  font-size:clamp(18px,5vw,24px);
+  margin-bottom:14px;
+}
+
+/* Phase 10.8 Cycle refinements */
+.yourCyclePhase{text-align:center;align-items:center}
+.yourCyclePhase h3{font-size:clamp(34px,10vw,54px);text-align:center;margin:4px auto 10px;line-height:1.05;color:#5b21b6}
+.yourCyclePhase .trainingBubble{margin-left:auto;margin-right:auto}
+.periodActionButton{width:50%;max-width:220px;margin-top:22px}
+.previousCyclesPanel{position:relative}
+.previousCyclesHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.previousCyclesHeader h2{margin:0}
+.plusCycleButton{width:38px;height:38px;border-radius:999px;border:1px solid #5b21b6;background:#5b21b6;color:#fff;font-size:24px;font-weight:900;line-height:1;display:grid;place-items:center}
+.previousCycleForm{border:1px solid var(--line);background:#fff;border-radius:22px;padding:12px;margin-bottom:14px;display:grid;gap:12px}
+.previousCycleDates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.savePreviousCycleButton{width:70%;max-width:260px}
+.twoLineFlow{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+.twoLineFlow .flowBubble{flex:0 0 calc(33.333% - 8px);max-width:150px;text-align:center;padding:9px 8px}
+.compactSymptoms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.compactSymptoms .symptomButton{min-height:46px;padding:9px 10px;border-radius:16px}
+.compactSymptoms .symptomButton span{font-size:12.5px;line-height:1.15}
+.compactSymptoms .symptomButton b{font-size:11px;padding:5px 8px}
+.saveCheckinButton{width:70%;max-width:320px;margin-top:22px}
+@media(max-width:420px){.periodActionButton{width:60%}.previousCycleDates{gap:8px}.previousCycleDates input{font-size:13px;padding:10px 6px}.twoLineFlow .flowBubble{flex-basis:calc(33.333% - 8px);font-size:12px}.compactSymptoms .symptomButton span{font-size:12px}.saveCheckinButton{width:78%}}
+
+
+/* Today page cycle card simplification */
+.cycleTodayButton{
+  width:100%;
+  border:1px solid var(--line);
+  text-align:left;
+  cursor:pointer;
+}
+.cycleTodayButton .cyclePhase h3{
+  text-align:center;
+  font-size:clamp(30px,9vw,48px);
+  color:#5b21b6;
+}
+.cycleTodayButton .trainingBubble{
+  margin:14px auto 0;
+  display:flex;
+  width:max-content;
+  max-width:100%;
+  justify-content:center;
+}
+.cycleTodayButton:active{
+  transform:scale(.99);
+  filter:brightness(.98);
+}
+
+
+/* Cycle phase rename: Shark-week */
+.cyclePhase.shark-week{
+  background:linear-gradient(135deg,#fff1f2,#fff);
+}
+
+/* Cycle small patch fixed */
+.previousPeriodFields input[type="date"],
+.previousPeriodFieldsSide input[type="date"]{
+  height:34px;
+  min-height:34px;
+  padding:6px 8px;
+  font-size:12px;
+  border-radius:14px;
+}
+.previousPeriodFields .field,
+.previousPeriodFieldsSide .field{
+  max-width:60%;
+  margin-left:auto;
+  margin-right:auto;
+}
+.previousPeriodFields,
+.previousPeriodFieldsSide{
+  justify-items:center;
+}
+@media(max-width:430px){
+  .previousPeriodFields .field,
+  .previousPeriodFieldsSide .field{
+    max-width:70%;
+  }
+}
+
+/* Stronger previous-cycle date field reduction */
+.previousCycleDateField,
+.previousPeriodFields .field,
+.previousPeriodFieldsSide .field,
+.previousCycleBox .field,
+.previousPeriodBox .field{
+  width:60% !important;
+  max-width:180px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.previousCycleDateInput,
+.previousCycleDateField input[type="date"],
+.previousPeriodFields input[type="date"],
+.previousPeriodFieldsSide input[type="date"],
+.previousCycleBox input[type="date"],
+.previousPeriodBox input[type="date"]{
+  width:100% !important;
+  max-width:180px !important;
+  height:32px !important;
+  min-height:32px !important;
+  padding:4px 8px !important;
+  font-size:12px !important;
+  line-height:1.1 !important;
+  border-radius:12px !important;
+}
+.previousPeriodFields,
+.previousPeriodFieldsSide,
+.previousCycleBox,
+.previousPeriodBox{
+  justify-items:center !important;
+  align-items:center !important;
+}
+@media(max-width:430px){
+  .previousCycleDateField,
+  .previousPeriodFields .field,
+  .previousPeriodFieldsSide .field,
+  .previousCycleBox .field,
+  .previousPeriodBox .field{
+    width:68% !important;
+    max-width:170px !important;
+  }
+}
+
+
+/* Workout flow UI simplification */
+.plainAddButton{
+  border:0;
+  background:transparent;
+  color:#5b21b6;
+  padding:8px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+}
+.plainAddButton:active{
+  transform:scale(.94);
+  background:#f5f3ff;
+}
+.exerciseCard .exerciseTop h3{
+  margin:0;
+  font-size:clamp(18px,5vw,24px);
+}
+.fullAddSetRow{
+  margin-top:12px;
+}
+.fullAddSetRow .ghost{
+  width:100%;
+  justify-content:center;
+  text-align:center;
+}
+.exerciseCard .setHeader{
+  margin-top:14px;
+}
+
+
+/* Progress report page */
+.progressReportChart h3{
+  margin-bottom:10px;
+  color:#5b21b6;
+}
+.progressLineChart{
+  width:100%;
+  height:170px;
+  color:#5b21b6;
+}
+.gridLine{
+  stroke:rgba(91,33,182,.14);
+  stroke-width:1;
+}
+.gridLine.vertical{
+  stroke:rgba(91,33,182,.09);
+}
+.axisText{
+  fill:var(--muted);
+  font-size:10px;
+  font-weight:800;
+}
+.progressReport .miniOverview p{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+/* Today Shark watch patch */
+.sharkWatchToday .cyclePhase h3,
+.cycleTodayButton.sharkWatchToday .cyclePhase h3{
+  font-size:clamp(22px,6.5vw,34px);
+  text-align:center;
+}
+.sharkWatchToday .trainingBubble,
+.cycleTodayButton.sharkWatchToday .trainingBubble{
+  margin-top:6px;
+}
+#cycle-check-in{
+  scroll-margin-top:90px;
+}
+
+
+/* Workout page patch 2 */
+.workoutHeader{
+  align-items:center;
+}
+.workoutHeader > div{
+  width:100%;
+}
+.workoutDisplayTitle{
+  margin:0;
+  font-size:clamp(20px,5.8vw,28px);
+  font-weight:900;
+  color:var(--ink);
+}
+.customWorkoutNameInput{
+  width:100%;
+}
+.exerciseCard .exerciseTop.noToggle{
+  grid-template-columns:1fr auto;
+  align-items:center;
+}
+.exerciseCard .exerciseTop.noToggle h3{
+  font-size:clamp(14px,3.8vw,18px);
+  line-height:1.15;
+  margin:0;
+}
+.exerciseCard .collapseBtn{
+  display:none !important;
+}
+.fullAddSetRow{
+  margin-top:12px;
+}
+.fullAddSetRow .ghost{
+  width:100%;
+  justify-content:center;
+  text-align:center;
+}
+.workoutBottomAddExercise{
+  margin-top:8px;
+}
+
+/* More page patch */
+.morePage .aboutMeBox p{
+  line-height:1.55;
+  color:var(--ink);
+  font-weight:700;
+}
+.morePage .aboutMeBox strong{
+  color:#5b21b6;
+}

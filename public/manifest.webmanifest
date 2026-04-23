@@ -1,0 +1,17 @@
+{
+  "name": "Muscle Royalty",
+  "short_name": "Muscle Royalty",
+  "description": "Cycle-aware strength and rehab workout tracker.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf5ff",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
