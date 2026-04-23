@@ -621,25 +621,3 @@
 .morePage .aboutMeBox strong{
   color:#5b21b6;
 }
-
-
-/* Cycle page only — Your cycle polish */
-.yourCycleCard{
-  overflow:hidden;
-}
-.yourCycleCard .cyclePhase{
-  gap:6px;
-}
-.yourCyclePhase h3{
-  margin-bottom:2px !important;
-}
-.yourCycleCard .cycleHeroGrid{
-  margin-top:4px !important;
-  margin-bottom:4px !important;
-}
-.yourCycleCard .nextPeriodBox{
-  padding:10px 12px;
-}
-.yourCycleCard .trainingBubble{
-  margin-top:6px !important;
-}

@@ -749,7 +749,7 @@ export default function App(){
     <div className={"cyclePhase compact yourCyclePhase "+((currentCycle.phase||"").toLowerCase().replaceAll(" ","-"))}>
       <h3>{currentCycle.phase}</h3>
       <div className="cycleHeroGrid todayCycleGrid">
-        <div className="nextPeriodBox"><span>Next period is due in</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} {Number(currentCycle.daysUntilNextPeriod)===1?"day":"days"}</b></div>
+        <div className="nextPeriodBox"><span>Next period is due</span><b>{formatDays(currentCycle.daysUntilNextPeriod)} days</b></div>
       </div>
       <strong className="trainingBubble">{currentCycle.trainingRecommendation}</strong>
     </div>
