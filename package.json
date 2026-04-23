@@ -11,5 +11,7 @@
     "react-dom": "18.2.0",
     "lucide-react": "0.468.0"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "name": "muscle-royalty-install-safe-base",
+  "private": true
 }
