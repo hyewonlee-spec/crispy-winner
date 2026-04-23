@@ -367,7 +367,6 @@ export default function App(){
   const [periodDateMode,setPeriodDateMode]=useState(null);
   const [pendingPeriodDate,setPendingPeriodDate]=useState(todayIso());
   const [showPreviousPeriodBox,setShowPreviousPeriodBox]=useState(false);
-  const [showPreviousCycles,setShowPreviousCycles]=useState(false);
   const [previousPeriod,setPreviousPeriod]=useState({start:"",end:""});
   const [cycleLogs,setCycleLogs]=useState([]);
   const [cycleStatus,setCycleStatus]=useState("");
@@ -772,44 +771,20 @@ export default function App(){
   </div>
 
   <div className="panel previousCyclesPanel">
-    <div className="previousCyclesHeader">
-      <h2>Previous cycles</h2>
-      <div className="previousCycleActions">
-        <button type="button" className="togglePreviousCyclesButton" onClick={()=>setShowPreviousCycles(v=>!v)}>{showPreviousCycles ? "Hide" : "Show"}</button>
-        <button type="button" className="plusCycleButton" onClick={()=>setShowPreviousPeriodBox(v=>!v)}>+</button>
-      </div>
-    </div>
-
-    {showPreviousPeriodBox&&
-      <div className="previousCycleForm">
-        <div className="previousCycleDates compactPreviousDates">
-          <label className="field previousCycleDateField">
-            <span>Start date</span>
-            <input className="previousCycleDateInput" type="date" value={previousPeriod.start} onChange={e=>setPreviousPeriod({...previousPeriod,start:e.target.value})}/>
-          </label>
-          <label className="field previousCycleDateField">
-            <span>End date</span>
-            <input className="previousCycleDateInput" type="date" value={previousPeriod.end} onChange={e=>setPreviousPeriod({...previousPeriod,end:e.target.value})}/>
-          </label>
-        </div>
-        <div className="centerControl savePreviousCycleButton"><Button variant="primary" full onClick={savePreviousPeriodDates}>Save cycle</Button></div>
-      </div>
-    }
-
-    {showPreviousCycles&&
-      <div className="sessionList">
-        {cycleLogs.filter(log=>log.periodStartDate).length===0&&<div className="emptyMini">No previous cycles yet.</div>}
-        {cycleLogs.filter(log=>log.periodStartDate).slice(0,4).map(log=>
-          <div className="sessionItem" key={log.id}>
-            <div className="row">
-              <b>{formatAuDate(log.periodStartDate)} – {formatAuDate(log.periodEndDate)}</b>
-              <button className="linkBtn dangerLink" onClick={()=>archiveCycleLog(log.id)}>Delete</button>
-            </div>
-            <p className="muted">{log.cyclePhase||"Cycle"} · {log.periodLength??"—"} {Number(log.periodLength)===1?"day":"days"}</p>
+    <div className="previousCyclesHeader"><h2>Previous cycles</h2><button type="button" className="plusCycleButton" onClick={()=>setShowPreviousPeriodBox(v=>!v)}>+</button></div>
+    {showPreviousPeriodBox&&<div className="previousCycleForm"><div className="previousCycleDates"><label className="field"><span>Start date</span><input type="date" value={previousPeriod.start} onChange={e=>setPreviousPeriod({...previousPeriod,start:e.target.value})}/></label><label className="field"><span>End date</span><input type="date" value={previousPeriod.end} onChange={e=>setPreviousPeriod({...previousPeriod,end:e.target.value})}/></label></div><div className="centerControl savePreviousCycleButton"><Button variant="primary" full onClick={savePreviousPeriodDates}>Save cycle</Button></div></div>}
+    <div className="sessionList">
+      {cycleLogs.filter(log=>log.periodStartDate).length===0&&<div className="emptyMini">No previous cycles yet.</div>}
+      {cycleLogs.filter(log=>log.periodStartDate).slice(0,4).map(log=>
+        <div className="sessionItem" key={log.id}>
+          <div className="row">
+            <b>{formatAuDate(log.periodStartDate)} – {formatAuDate(log.periodEndDate)}</b>
+            <button className="linkBtn dangerLink" onClick={()=>archiveCycleLog(log.id)}>Delete</button>
           </div>
-        )}
-      </div>
-    }
+          <p className="muted">{log.cyclePhase||"Cycle"} · {log.periodLength??"—"} days</p>
+        </div>
+      )}
+    </div>
   </div>
 
   <div className="panel cyclePanel" id="cycle-check-in">
@@ -832,19 +807,19 @@ export default function App(){
     </label>
 
     <div className="symptomButtonGrid compactSymptoms">
-      <button type="button" className={cycle.headacheMigraine>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("headacheMigraine")}><span>Headache / migraine</span></button>
-      <button type="button" className={cycle.saltCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("saltCravings")}><span>Salt cravings</span></button>
-      <button type="button" className={cycle.sugarCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sugarCravings")}><span>Sugar cravings</span></button>
-      <button type="button" className={cycle.cramps>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("cramps")}><span>Cramps</span></button>
-      <button type="button" className={cycle.indigestion>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("indigestion")}><span>Indigestion</span></button>
-      <button type="button" className={cycle.bloating>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("bloating")}><span>Bloating</span></button>
-      <button type="button" className={cycle.constipation>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("constipation")}><span>Constipation</span></button>
-      <button type="button" className={cycle.tenderBreasts>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("tenderBreasts")}><span>Tender breasts</span></button>
-      <button type="button" className={cycle.acne>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("acne")}><span>Acne</span></button>
-      <button type="button" className={cycle.dizziness>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("dizziness")}><span>Dizziness</span></button>
-      <button type="button" className={cycle.sleepDisruption>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sleepDisruption")}><span>Sleep disruption</span></button>
-      <button type="button" className={cycle.moodSwings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("moodSwings")}><span>Mood swings</span></button>
-      <button type="button" className={cycle.fatigue>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("fatigue")}><span>Fatigue</span></button>
+      <button type="button" className={cycle.headacheMigraine>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("headacheMigraine")}><span>Headache / migraine</span><b>{cycle.headacheMigraine>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.saltCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("saltCravings")}><span>Salt cravings</span><b>{cycle.saltCravings>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.sugarCravings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sugarCravings")}><span>Sugar cravings</span><b>{cycle.sugarCravings>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.cramps>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("cramps")}><span>Cramps</span><b>{cycle.cramps>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.indigestion>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("indigestion")}><span>Indigestion</span><b>{cycle.indigestion>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.bloating>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("bloating")}><span>Bloating</span><b>{cycle.bloating>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.constipation>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("constipation")}><span>Constipation</span><b>{cycle.constipation>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.tenderBreasts>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("tenderBreasts")}><span>Tender breasts</span><b>{cycle.tenderBreasts>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.acne>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("acne")}><span>Acne</span><b>{cycle.acne>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.dizziness>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("dizziness")}><span>Dizziness</span><b>{cycle.dizziness>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.sleepDisruption>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("sleepDisruption")}><span>Sleep disruption</span><b>{cycle.sleepDisruption>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.moodSwings>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("moodSwings")}><span>Mood swings</span><b>{cycle.moodSwings>0?"Yes":"No"}</b></button>
+      <button type="button" className={cycle.fatigue>0?"symptomButton active":"symptomButton"} onClick={()=>toggleSymptom("fatigue")}><span>Fatigue</span><b>{cycle.fatigue>0?"Yes":"No"}</b></button>
     </div>
 
     <textarea className="notes small" placeholder="Daily cycle notes…" value={cycle.notes} onChange={e=>setCycle({...cycle,notes:e.target.value})}/>

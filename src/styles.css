@@ -623,7 +623,7 @@
 }
 
 
-/* Cycle page polish */
+/* Cycle page only — Your cycle polish */
 .yourCycleCard{
   overflow:hidden;
 }
@@ -642,99 +642,4 @@
 }
 .yourCycleCard .trainingBubble{
   margin-top:6px !important;
-}
-
-/* Previous cycles toggle + compact date fields */
-.previousCyclesHeader{
-  align-items:center;
-}
-.previousCycleActions{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.togglePreviousCyclesButton{
-  border:1px solid var(--line);
-  background:#fff;
-  color:var(--royal);
-  border-radius:999px;
-  padding:8px 12px;
-  font-weight:900;
-}
-.compactPreviousDates{
-  display:flex !important;
-  justify-content:center;
-  align-items:flex-end;
-  gap:10px;
-  width:100%;
-}
-.compactPreviousDates .previousCycleDateField{
-  width:46% !important;
-  max-width:145px !important;
-  min-width:0 !important;
-  margin:0 !important;
-}
-.compactPreviousDates .previousCycleDateInput,
-.compactPreviousDates input[type="date"]{
-  width:100% !important;
-  max-width:145px !important;
-  min-width:0 !important;
-  height:32px !important;
-  min-height:32px !important;
-  padding:4px 6px !important;
-  font-size:11px !important;
-  border-radius:12px !important;
-}
-
-/* Cycle-aware check-in polish */
-.twoLineFlow,
-.flowBubbleGrid.twoLineFlow{
-  display:flex !important;
-  flex-wrap:nowrap !important;
-  gap:5px !important;
-  justify-content:center;
-  align-items:center;
-}
-.twoLineFlow .flowBubble,
-.flowBubbleGrid.twoLineFlow .flowBubble{
-  padding:7px 7px !important;
-  font-size:11px !important;
-  min-width:auto !important;
-  flex:0 1 auto;
-  font-weight:500 !important;
-  text-align:center;
-}
-.compactSymptoms{
-  gap:8px !important;
-}
-.compactSymptoms .symptomButton{
-  min-height:42px !important;
-  padding:9px 8px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-  font-weight:500 !important;
-}
-.compactSymptoms .symptomButton span{
-  width:100%;
-  text-align:center !important;
-  font-weight:500 !important;
-  line-height:1.15;
-}
-.compactSymptoms .symptomButton b{
-  display:none !important;
-}
-@media(max-width:380px){
-  .twoLineFlow .flowBubble,
-  .flowBubbleGrid.twoLineFlow .flowBubble{
-    font-size:10px !important;
-    padding:7px 5px !important;
-  }
-  .compactPreviousDates{
-    gap:8px;
-  }
-  .compactPreviousDates .previousCycleDateField{
-    max-width:130px !important;
-  }
 }
