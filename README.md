@@ -34,3 +34,6 @@ This repo now includes a GitHub Actions workflow at `.github/workflows/deploy-pa
 4. Wait for the "Deploy to GitHub Pages" workflow to finish.
 
 The Vite `base` path is set automatically during GitHub Actions builds using the repo name, so static assets resolve correctly on project pages URLs.
+
+git commit --allow-empty -m "chore: retrigger pages CI"
+git push origin main
