@@ -43,8 +43,6 @@ const DEFAULT_EXERCISES = [
   {exercise:"Rope Triceps Pressdown",category:"Arms",movementPattern:"Elbow Extension",primaryMuscles:["Triceps"],status:"Recommended",defaultSets:2,defaultReps:"12",coachNote:"Use instead of elbow-flaring extensions.",equipment:["Cable"],riskFlags:["Elbow friendly"]}
 ].map((e,i)=>({id:"seed-"+(i+1),equipment:e.equipment||[],primaryMuscles:e.primaryMuscles||[],riskFlags:e.riskFlags||[],defaultRpe:6,isCustom:false,active:true,...e}));
 
-- function clone(v){ return JSON.parse(JSON.stringify(v)); }
-- 
 function openDb(){
   return new Promise((resolve, reject)=>{
     const req = indexedDB.open(DB_NAME, DB_VERSION);
