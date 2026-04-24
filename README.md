@@ -23,3 +23,16 @@ Phase 8: Cycle tab now supports Period Started/Ended buttons plus daily symptom 
 
 
 Phase 8.1: Cycle tab UI polish and Yes/No symptom buttons. See PHASE_8_1_CYCLE_UI_NOTES.md.
+
+## GitHub Pages deploy
+
+This repo now includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+
+1. Push to `main`.
+2. In GitHub, go to **Settings → Pages**.
+3. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+4. Wait for the "Deploy to GitHub Pages" workflow to finish.
+
+The Vite `base` path is set automatically during GitHub Actions builds using the repo name, so static assets resolve correctly on project pages URLs.
+
+The workflow uses Node.js 24 and current major versions of `actions/checkout` + `actions/setup-node` to avoid the Node 20 runtime deprecation warnings.
