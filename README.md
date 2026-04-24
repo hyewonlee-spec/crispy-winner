@@ -35,5 +35,4 @@ This repo now includes a GitHub Actions workflow at `.github/workflows/deploy-pa
 
 The Vite `base` path is set automatically during GitHub Actions builds using the repo name, so static assets resolve correctly on project pages URLs.
 
-git commit --allow-empty -m "chore: retrigger pages CI"
-git push origin main
+The workflow uses Node.js 24 and current major versions of `actions/checkout` + `actions/setup-node` to avoid the Node 20 runtime deprecation warnings.
